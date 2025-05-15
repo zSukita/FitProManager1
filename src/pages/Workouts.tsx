@@ -1,20 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search, Filter, ChevronDown, Copy, Share, Trash2, MoveRight } from 'lucide-react';
-import { workouts } from '../data/mockData';
 import toast from 'react-hot-toast';
+import { fetchWorkouts, deleteWorkout, getCurrentUser } from '../services/supabaseService'; // Import Supabase services
+import { Workout } from '../types'; // Import Workout type
 
 const Workouts: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('todos');
   const [filterMuscle, setFilterMuscle] = useState('todos');
+  const [workouts, setWorkouts] = useState<Workout[]>([]); // Use state for workouts
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null); // State for current user
+
+  // Fetch workouts on component mount and when currentUser changes
+  useEffect(() => {
+    const loadUserAndWorkouts = async () => {
+      setLoading(true);
+      setError(null);
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+
+      if (user) {
+        try {
+          const fetchedWorkouts = await fetchWorkouts(user.id);
+          setWorkouts(fetchedWorkouts);
+        } catch (err) {
+          console.error('Failed to fetch workouts:', err);
+          setError('Erro ao carregar treinos.');
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+        setError('Usuário não autenticado.'); // Handle unauthenticated state
+      }
+    };
+
+    loadUserAndWorkouts();
+  }, []); // Dependency array includes currentUser to refetch if user state changes (e.g., after login)
 
   // Filtrar treinos
   const filteredWorkouts = workouts.filter(workout => {
     const matchesSearch = workout.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (workout.description && workout.description.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesType = filterType === 'todos' || workout.type === filterType;
-    const matchesMuscle = filterMuscle === 'todos' || workout.targetMuscleGroups.includes(filterMuscle as any);
+    const matchesMuscle = filterMuscle === 'todos' || workout.target_muscle_groups.includes(filterMuscle); // Use target_muscle_groups from DB
 
     return matchesSearch && matchesType && matchesMuscle;
   });
@@ -22,7 +54,7 @@ const Workouts: React.FC = () => {
   // Manipuladores de eventos
   const handleCopyWorkout = (id: string) => {
     toast.success('Treino duplicado com sucesso!');
-    // TODO: Implementar lógica de duplicação real
+    // TODO: Implementar lógica de duplicação real (fetch workout by id, create new with same data)
   };
 
   const handleShareWorkout = (id: string) => {
@@ -30,9 +62,20 @@ const Workouts: React.FC = () => {
     toast.success('Link do treino copiado para a área de transferência!');
   };
 
-  const handleDeleteWorkout = (id: string) => {
-    // TODO: Implementar lógica de exclusão real
-    toast.success('Treino excluído com sucesso!');
+  const handleDeleteWorkout = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir este treino?')) {
+      return;
+    }
+
+    try {
+      await deleteWorkout(id);
+      // Remove the deleted workout from the state
+      setWorkouts(workouts.filter(workout => workout.id !== id));
+      toast.success('Treino excluído com sucesso!');
+    } catch (err) {
+      console.error('Failed to delete workout:', err);
+      toast.error('Erro ao excluir treino.');
+    }
   };
 
   // Cores para os tipos de treino
@@ -53,6 +96,23 @@ const Workouts: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-red-500 mt-8">
+        <p>{error}</p>
+        {/* Optionally add a retry button */}
+      </div>
+    );
+  }
+
   return (
     <div className="animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
@@ -64,7 +124,6 @@ const Workouts: React.FC = () => {
         <Link
           to="/workouts/new"
           className="btn-primary flex items-center gap-2 whitespace-nowrap"
-          // Removed temporary diagnostic handler
         >
           <Plus size={18} />
           Novo Treino
@@ -170,7 +229,7 @@ const Workouts: React.FC = () => {
                 <div className="mb-4">
                   <h4 className="text-xs font-medium text-gray-500 mb-2">Grupos musculares</h4>
                   <div className="flex flex-wrap gap-1">
-                    {workout.targetMuscleGroups.map((group, idx) => (
+                    {workout.target_muscle_groups.map((group, idx) => ( // Use target_muscle_groups
                       <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
                         {group}
                       </span>

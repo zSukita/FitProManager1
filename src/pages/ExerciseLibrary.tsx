@@ -1,56 +1,97 @@
-import React from 'react';
-import { exerciseLibrary } from '../data/mockData';
+import React, { useState, useEffect } from 'react';
 import { Exercise } from '../types';
-import { PlusCircle, Dumbbell, Video, Image } from 'lucide-react';
+import { PlusCircle, Dumbbell, Video, Image, X } from 'lucide-react';
+import { fetchExercises, createExercise, getCurrentUser } from '../services/supabaseService'; // Import Supabase services
+import toast from 'react-hot-toast';
 
 const ExerciseLibrary: React.FC = () => {
-  // Estado para gerenciar a lista de exercícios (inicialmente mock data)
-  const [exercises, setExercises] = React.useState<Exercise[]>(exerciseLibrary);
-  // Estado para gerenciar a visibilidade do modal de adicionar exercício
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
-  // Estado para o formulário de novo exercício
-  const [newExercise, setNewExercise] = React.useState<Partial<Exercise>>({
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newExercise, setNewExercise] = useState<Omit<Exercise, 'id' | 'created_at' | 'created_by'>>({
     name: '',
     category: 'força',
-    muscleGroup: 'peito',
+    muscle_group: 'peito', // Use muscle_group
     equipment: 'nenhum',
     difficulty: 'iniciante',
     description: '',
-    videoUrl: '',
-    imageUrl: '',
+    video_url: '', // Use video_url
+    image_url: '', // Use image_url
   });
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    const loadUserAndExercises = async () => {
+      setLoading(true);
+      setError(null);
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+
+      if (!user) {
+        setError('Você precisa estar logado para ver a biblioteca de exercícios.');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const fetchedExercises = await fetchExercises();
+        setExercises(fetchedExercises);
+      } catch (err) {
+        console.error('Error loading exercises:', err);
+        setError('Erro ao carregar exercícios.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserAndExercises();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setNewExercise({ ...newExercise, [name]: value });
   };
 
-  const handleAddExercise = () => {
-    if (newExercise.name && newExercise.category && newExercise.muscleGroup && newExercise.equipment && newExercise.difficulty && newExercise.description) {
-      const addedExercise: Exercise = {
-        ...newExercise,
-        id: `ex-${Date.now()}`, // Gerar um ID simples baseado no timestamp
-        category: newExercise.category as any, // Cast para o tipo correto
-        muscleGroup: newExercise.muscleGroup as any, // Cast para o tipo correto
-        equipment: newExercise.equipment as any, // Cast para o tipo correto
-        difficulty: newExercise.difficulty as any, // Cast para o tipo correto
-      };
+  const handleAddExercise = async () => {
+    if (!currentUser) {
+      toast.error('Usuário não autenticado.');
+      return;
+    }
+
+    if (!newExercise.name || !newExercise.category || !newExercise.muscle_group || !newExercise.equipment || !newExercise.difficulty || !newExercise.description) {
+      toast.error('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    try {
+      const addedExercise = await createExercise(newExercise, currentUser.id);
       setExercises([...exercises, addedExercise]);
       setIsModalOpen(false);
       setNewExercise({ // Resetar formulário
         name: '',
         category: 'força',
-        muscleGroup: 'peito',
+        muscle_group: 'peito',
         equipment: 'nenhum',
         difficulty: 'iniciante',
         description: '',
-        videoUrl: '',
-        imageUrl: '',
+        video_url: '',
+        image_url: '',
       });
-    } else {
-      alert('Por favor, preencha todos os campos obrigatórios.');
+      toast.success('Exercício adicionado com sucesso!');
+    } catch (err) {
+      console.error('Error adding exercise:', err);
+      toast.error('Erro ao adicionar exercício.');
     }
   };
+
+  if (loading) {
+    return <div className="text-center py-10">Carregando exercícios...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center py-10 text-red-500">{error}</div>;
+  }
 
   return (
     <div className="animate-fade-in">
@@ -69,47 +110,66 @@ const ExerciseLibrary: React.FC = () => {
       </div>
 
       {/* Lista de Exercícios */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {exercises.map((exercise) => (
-          <div key={exercise.id} className="card flex flex-col">
-            <div className="relative h-40 w-full rounded-t-lg overflow-hidden">
-              <img
-                src={exercise.imageUrl || 'https://images.pexels.com/photos/1557109/pexels-photo-1557109.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'} // Imagem padrão se não houver
-                alt={exercise.name}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-              <div className="absolute bottom-3 left-3 text-white">
-                <h3 className="text-lg font-bold">{exercise.name}</h3>
-                <p className="text-sm">{exercise.muscleGroup.charAt(0).toUpperCase() + exercise.muscleGroup.slice(1)}</p>
-              </div>
-            </div>
-            <div className="p-4 flex-1 flex flex-col justify-between">
-              <p className="text-sm text-gray-600 mb-3">{exercise.description}</p>
-              <div className="flex flex-wrap gap-2 text-xs text-gray-700 mb-4">
-                <span className="badge badge-secondary">{exercise.category}</span>
-                <span className="badge badge-accent">{exercise.equipment}</span>
-                <span className="badge badge-primary">{exercise.difficulty}</span>
-              </div>
-              <div className="flex gap-2">
-                {exercise.videoUrl && (
-                  <a href={exercise.videoUrl} target="_blank" rel="noopener noreferrer" className="btn-outline-secondary btn-sm flex items-center gap-1">
-                    <Video size={16} /> Vídeo
-                  </a>
-                )}
-                 {exercise.imageUrl && (
-                  <a href={exercise.imageUrl} target="_blank" rel="noopener noreferrer" className="btn-outline-secondary btn-sm flex items-center gap-1">
-                    <Image size={16} /> Imagem
-                  </a>
-                )}
-                {/* Botões de Editar/Excluir (implementar depois) */}
-                {/* <button className="btn-outline-primary btn-sm">Editar</button>
-                <button className="btn-outline-danger btn-sm">Excluir</button> */}
-              </div>
-            </div>
+      {exercises.length === 0 ? (
+         <div className="text-center py-12 bg-gray-50 rounded-lg">
+          <Dumbbell className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-lg font-medium text-gray-900">Nenhum exercício na biblioteca</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            Adicione seu primeiro exercício para começar.
+          </p>
+          <div className="mt-6">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="btn-primary"
+            >
+              Adicionar Exercício
+            </button>
           </div>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {exercises.map((exercise) => (
+            <div key={exercise.id} className="card flex flex-col">
+              <div className="relative h-40 w-full rounded-t-lg overflow-hidden">
+                <img
+                  src={exercise.image_url || 'https://images.pexels.com/photos/1557109/pexels-photo-1557109.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'} // Imagem padrão se não houver
+                  alt={exercise.name}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                <div className="absolute bottom-3 left-3 text-white">
+                  <h3 className="text-lg font-bold">{exercise.name}</h3>
+                  <p className="text-sm">{exercise.muscle_group.charAt(0).toUpperCase() + exercise.muscle_group.slice(1)}</p>
+                </div>
+              </div>
+              <div className="p-4 flex-1 flex flex-col justify-between">
+                <p className="text-sm text-gray-600 mb-3">{exercise.description}</p>
+                <div className="flex flex-wrap gap-2 text-xs text-gray-700 mb-4">
+                  <span className="badge badge-secondary">{exercise.category}</span>
+                  <span className="badge badge-accent">{exercise.equipment}</span>
+                  <span className="badge badge-primary">{exercise.difficulty}</span>
+                </div>
+                <div className="flex gap-2">
+                  {exercise.video_url && (
+                    <a href={exercise.video_url} target="_blank" rel="noopener noreferrer" className="btn-outline-secondary btn-sm flex items-center gap-1">
+                      <Video size={16} /> Vídeo
+                    </a>
+                  )}
+                   {exercise.image_url && (
+                    <a href={exercise.image_url} target="_blank" rel="noopener noreferrer" className="btn-outline-secondary btn-sm flex items-center gap-1">
+                      <Image size={16} /> Imagem
+                    </a>
+                  )}
+                  {/* Botões de Editar/Excluir (implementar depois) */}
+                  {/* <button className="btn-outline-primary btn-sm">Editar</button>
+                  <button className="btn-outline-danger btn-sm">Excluir</button> */}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
 
       {/* Modal de Adicionar Exercício */}
       {isModalOpen && (
@@ -159,8 +219,8 @@ const ExerciseLibrary: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Grupo Muscular</label>
                   <select
-                    name="muscleGroup"
-                    value={newExercise.muscleGroup}
+                    name="muscle_group" // Use muscle_group
+                    value={newExercise.muscle_group} // Use muscle_group
                     onChange={handleInputChange}
                     className="input"
                     required
@@ -175,6 +235,7 @@ const ExerciseLibrary: React.FC = () => {
                     <option value="abdômen">Abdômen</option>
                     <option value="core">Core</option>
                     <option value="total">Total</option>
+                    <option value="panturrilha">Panturrilha</option>
                   </select>
                 </div>
               </div>
@@ -219,8 +280,8 @@ const ExerciseLibrary: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700">URL do Vídeo (Opcional)</label>
                 <input
                   type="url"
-                  name="videoUrl"
-                  value={newExercise.videoUrl}
+                  name="video_url" // Use video_url
+                  value={newExercise.video_url} // Use video_url
                   onChange={handleInputChange}
                   className="input"
                 />
@@ -229,8 +290,8 @@ const ExerciseLibrary: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700">URL da Imagem (Opcional)</label>
                 <input
                   type="url"
-                  name="imageUrl"
-                  value={newExercise.imageUrl}
+                  name="image_url" // Use image_url
+                  value={newExercise.image_url} // Use image_url
                   onChange={handleInputChange}
                   className="input"
                 />

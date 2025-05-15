@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { Client, Payment, Workout } from '../types';
+import { Client, Payment, Workout, Exercise } from '../types'; // Import Exercise
 import { User } from '@supabase/supabase-js';
 import { Profile } from '../types';
 
@@ -38,7 +38,8 @@ export const fetchWorkouts = async (trainerId: string): Promise<Workout[]> => {
   const { data, error } = await supabase
     .from('workouts')
     .select('*')
-    .eq('trainer_id', trainerId);
+    .eq('trainer_id', trainerId)
+    .order('created_at', { ascending: false }); // Order by creation date
 
   if (error) {
     console.error('Error fetching workouts:', error);
@@ -60,6 +61,19 @@ export const createWorkout = async (workoutData: Omit<Workout, 'id' | 'trainer_i
   }
   return data as Workout;
 };
+
+export const deleteWorkout = async (workoutId: string): Promise<void> => {
+  const { error } = await supabase
+    .from('workouts')
+    .delete()
+    .eq('id', workoutId);
+
+  if (error) {
+    console.error('Error deleting workout:', error);
+    throw error;
+  }
+};
+
 
 // --- Payment Service ---
 
@@ -89,6 +103,36 @@ export const createPayment = async (paymentData: Omit<Payment, 'id' | 'trainer_i
   }
   return data as Payment;
 };
+
+// --- Exercise Service ---
+
+export const fetchExercises = async (): Promise<Exercise[]> => {
+  const { data, error } = await supabase
+    .from('exercises')
+    .select('*')
+    .order('name', { ascending: true }); // Order alphabetically
+
+  if (error) {
+    console.error('Error fetching exercises:', error);
+    throw error;
+  }
+  return data as Exercise[];
+};
+
+export const createExercise = async (exerciseData: Omit<Exercise, 'id' | 'created_at' | 'created_by'>, userId: string): Promise<Exercise> => {
+  const { data, error } = await supabase
+    .from('exercises')
+    .insert({ ...exerciseData, created_by: userId })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating exercise:', error);
+    throw error;
+  }
+  return data as Exercise;
+};
+
 
 // --- Auth Service (Basic) ---
 export const getCurrentUser = async (): Promise<User | null> => {

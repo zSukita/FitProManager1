@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Plus, 
-  Search, 
-  Save, 
-  Trash2, 
-  MoveUp, 
-  MoveDown, 
+import {
+  ArrowLeft,
+  Plus,
+  Search,
+  Save,
+  Trash2,
+  MoveUp,
+  MoveDown,
   Share,
   FileText,
   Timer,
@@ -16,18 +16,21 @@ import {
   Dumbbell,
   X
 } from 'lucide-react';
-import { Exercise, ExerciseSet, WorkoutExercise, ExerciseLibrary } from '../types';
+import { Exercise, ExerciseSet, WorkoutExercise } from '../types'; // Removed ExerciseLibrary
 import toast from 'react-hot-toast';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import { createWorkout, getCurrentUser, fetchExercises } from '../services/supabaseService'; // Import fetchExercises
 
-interface WorkoutBuilderProps {
-  exercises: ExerciseLibrary;
-}
+// Removed WorkoutBuilderProps interface as exercises are fetched internally
+// interface WorkoutBuilderProps {
+//   exercises: ExerciseLibrary;
+// }
 
-const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
+// const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
+const WorkoutBuilder: React.FC = () => { // Updated component signature
   const navigate = useNavigate();
-  
+
   // Estado para o treino
   const [workoutName, setWorkoutName] = useState('Novo Treino');
   const [workoutDescription, setWorkoutDescription] = useState('');
@@ -35,7 +38,13 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
   const [workoutNotes, setWorkoutNotes] = useState('');
   const [targetMuscleGroups, setTargetMuscleGroups] = useState<string[]>([]);
   const [selectedExercises, setSelectedExercises] = useState<WorkoutExercise[]>([]);
-  
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // Estado para a biblioteca de exercícios do Supabase
+  const [availableExercises, setAvailableExercises] = useState<Exercise[]>([]); // State for exercises from Supabase
+  const [loadingExercises, setLoadingExercises] = useState(true);
+  const [exerciseError, setExerciseError] = useState<string | null>(null);
+
   // Estado para a busca e filtragem de exercícios
   const [searchTerm, setSearchTerm] = useState('');
   const [muscleGroupFilter, setMuscleGroupFilter] = useState('todos');
@@ -43,12 +52,41 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
   const [showExerciseLibrary, setShowExerciseLibrary] = useState(false);
   const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
 
-  // Filtrar exercícios
-  const filteredExercises = Object.values(exercises).filter(exercise => {
+  // Fetch current user and exercises on mount
+  useEffect(() => {
+    const loadData = async () => {
+      // Fetch user
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+      if (!user) {
+        toast.error('Você precisa estar logado para criar treinos.');
+        navigate('/login'); // Adjust route as needed
+        return; // Stop execution if user is not logged in
+      }
+
+      // Fetch exercises from Supabase
+      setLoadingExercises(true);
+      setExerciseError(null);
+      try {
+        const fetchedExercises = await fetchExercises();
+        setAvailableExercises(fetchedExercises);
+      } catch (err) {
+        console.error('Error loading exercises:', err);
+        setExerciseError('Erro ao carregar a biblioteca de exercícios.');
+      } finally {
+        setLoadingExercises(false);
+      }
+    };
+    loadData();
+  }, [navigate]);
+
+
+  // Filtrar exercícios disponíveis (da Supabase)
+  const filteredExercises = availableExercises.filter(exercise => {
     const matchesSearch = exercise.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesMuscle = muscleGroupFilter === 'todos' || exercise.muscleGroup === muscleGroupFilter;
+    const matchesMuscle = muscleGroupFilter === 'todos' || exercise.muscle_group === muscleGroupFilter; // Use muscle_group
     const matchesEquipment = equipmentFilter === 'todos' || exercise.equipment === equipmentFilter;
-    
+
     return matchesSearch && matchesMuscle && matchesEquipment;
   });
 
@@ -65,8 +103,8 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
     ]);
 
     // Adicionar grupo muscular ao treino se não existir
-    if (!targetMuscleGroups.includes(exercise.muscleGroup)) {
-      setTargetMuscleGroups([...targetMuscleGroups, exercise.muscleGroup]);
+    if (!targetMuscleGroups.includes(exercise.muscle_group)) { // Use muscle_group
+      setTargetMuscleGroups([...targetMuscleGroups, exercise.muscle_group]); // Use muscle_group
     }
 
     setShowExerciseLibrary(false);
@@ -77,18 +115,18 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
   const addSet = (exerciseIndex: number) => {
     const updatedExercises = [...selectedExercises];
     const lastSet = updatedExercises[exerciseIndex].sets[updatedExercises[exerciseIndex].sets.length - 1];
-    
+
     updatedExercises[exerciseIndex].sets.push({
       ...lastSet
     });
-    
+
     setSelectedExercises(updatedExercises);
   };
 
   // Remover série
   const removeSet = (exerciseIndex: number, setIndex: number) => {
     const updatedExercises = [...selectedExercises];
-    
+
     if (updatedExercises[exerciseIndex].sets.length > 1) {
       updatedExercises[exerciseIndex].sets.splice(setIndex, 1);
       setSelectedExercises(updatedExercises);
@@ -100,14 +138,14 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
   // Atualizar série
   const updateSet = (exerciseIndex: number, setIndex: number, field: keyof ExerciseSet, value: any) => {
     const updatedExercises = [...selectedExercises];
-    
+
     if (field === 'reps' || field === 'weight' || field === 'restTime') {
       const numValue = parseInt(value);
       updatedExercises[exerciseIndex].sets[setIndex][field] = isNaN(numValue) ? 0 : numValue;
     } else {
       updatedExercises[exerciseIndex].sets[setIndex][field] = value;
     }
-    
+
     setSelectedExercises(updatedExercises);
   };
 
@@ -116,18 +154,18 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
     const updatedExercises = [...selectedExercises];
     updatedExercises.splice(index, 1);
     setSelectedExercises(updatedExercises);
-    
+
     // Atualizar grupos musculares
-    const remainingMuscleGroups = updatedExercises.map(item => item.exercise.muscleGroup);
+    const remainingMuscleGroups = updatedExercises.map(item => item.exercise.muscle_group); // Use muscle_group
     setTargetMuscleGroups([...new Set(remainingMuscleGroups)]);
-    
+
     toast.success('Exercício removido do treino!');
   };
 
   // Mover exercício para cima
   const moveExerciseUp = (index: number) => {
     if (index === 0) return;
-    
+
     const updatedExercises = [...selectedExercises];
     [updatedExercises[index], updatedExercises[index - 1]] = [updatedExercises[index - 1], updatedExercises[index]];
     setSelectedExercises(updatedExercises);
@@ -136,43 +174,62 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
   // Mover exercício para baixo
   const moveExerciseDown = (index: number) => {
     if (index === selectedExercises.length - 1) return;
-    
+
     const updatedExercises = [...selectedExercises];
     [updatedExercises[index], updatedExercises[index + 1]] = [updatedExercises[index + 1], updatedExercises[index]];
     setSelectedExercises(updatedExercises);
   };
 
   // Salvar treino
-  const saveWorkout = () => {
+  const saveWorkout = async () => {
+    if (!currentUser) {
+      toast.error('Usuário não autenticado.');
+      return;
+    }
+
     if (workoutName.trim() === '') {
       toast.error('Por favor, dê um nome ao treino!');
       return;
     }
-    
+
     if (selectedExercises.length === 0) {
       toast.error('Adicione pelo menos um exercício ao treino!');
       return;
     }
-    
-    // Simulação de salvamento
-    toast.success('Treino salvo com sucesso!');
-    navigate('/treinos');
+
+    const workoutDataToSave = {
+      name: workoutName,
+      description: workoutDescription,
+      type: workoutType,
+      notes: workoutNotes,
+      target_muscle_groups: targetMuscleGroups,
+      exercises: selectedExercises,
+    };
+
+    try {
+      await createWorkout(workoutDataToSave, currentUser.id);
+      toast.success('Treino salvo com sucesso!');
+      navigate('/treinos'); // Navigate back to the workouts list
+    } catch (error) {
+      console.error('Failed to save workout:', error);
+      toast.error('Erro ao salvar treino.');
+    }
   };
 
   // Exportar para PDF
   const exportToPdf = async () => {
     const element = document.getElementById('workout-preview');
     if (!element) return;
-    
+
     toast.loading('Gerando PDF...');
-    
+
     try {
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         logging: false
       });
-      
+
       const imgData = canvas.toDataURL('image/jpeg', 1.0);
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -180,10 +237,10 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
       const ratio = canvas.width / canvas.height;
       const imgWidth = pdfWidth;
       const imgHeight = imgWidth / ratio;
-      
+
       pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
       pdf.save(`${workoutName}.pdf`);
-      
+
       toast.dismiss();
       toast.success('PDF gerado com sucesso!');
     } catch (error) {
@@ -198,7 +255,7 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
       {/* Cabeçalho */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={() => navigate('/treinos')}
             className="p-2 rounded-full hover:bg-gray-100"
           >
@@ -209,23 +266,23 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
             <p className="text-gray-600">Crie um treino personalizado</p>
           </div>
         </div>
-        
+
         <div className="flex gap-2">
-          <button 
+          <button
             onClick={exportToPdf}
             className="btn-outline flex items-center gap-1"
           >
             <FileText size={18} />
             Exportar PDF
           </button>
-          <button 
+          <button
             onClick={() => toast.success('Link do treino copiado para a área de transferência!')}
             className="btn-outline flex items-center gap-1"
           >
             <Share size={18} />
             Compartilhar
           </button>
-          <button 
+          <button
             onClick={saveWorkout}
             className="btn-primary flex items-center gap-1"
           >
@@ -240,7 +297,7 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
         <div className="lg:col-span-2">
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h2 className="text-lg font-semibold mb-4">Informações do Treino</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="workoutName" className="label">Nome do Treino</label>
@@ -253,7 +310,7 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
                   placeholder="Ex: Treino A - Superiores"
                 />
               </div>
-              
+
               <div>
                 <label htmlFor="workoutType" className="label">Tipo de Treino</label>
                 <select
@@ -271,7 +328,7 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
                 </select>
               </div>
             </div>
-            
+
             <div className="mt-4">
               <label htmlFor="workoutDescription" className="label">Descrição</label>
               <textarea
@@ -283,7 +340,7 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
                 rows={2}
               />
             </div>
-            
+
             <div className="mt-4">
               <label className="label">Grupos Musculares Alvo</label>
               <div className="flex flex-wrap gap-2 mt-1">
@@ -298,7 +355,7 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
                 )}
               </div>
             </div>
-            
+
             <div className="mt-4">
               <label htmlFor="workoutNotes" className="label">Observações</label>
               <textarea
@@ -316,7 +373,7 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-semibold">Exercícios do Treino</h2>
-              <button 
+              <button
                 onClick={() => setShowExerciseLibrary(true)}
                 className="btn-primary flex items-center gap-1 text-sm py-1.5"
               >
@@ -324,7 +381,7 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
                 Adicionar Exercício
               </button>
             </div>
-            
+
             {selectedExercises.length === 0 ? (
               <div className="text-center py-12 bg-gray-50 rounded-lg">
                 <Dumbbell className="mx-auto h-12 w-12 text-gray-400" />
@@ -333,7 +390,7 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
                   Adicione exercícios ao treino para começar.
                 </p>
                 <div className="mt-6">
-                  <button 
+                  <button
                     onClick={() => setShowExerciseLibrary(true)}
                     className="btn-primary"
                   >
@@ -344,7 +401,7 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
             ) : (
               <div className="space-y-6">
                 {selectedExercises.map((item, exerciseIndex) => (
-                  <div 
+                  <div
                     key={`${item.exercise.id}-${exerciseIndex}`}
                     className="border rounded-lg overflow-hidden"
                   >
@@ -359,7 +416,7 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
                           </h3>
                           <div className="flex items-center mt-1">
                             <span className="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded">
-                              {item.exercise.muscleGroup}
+                              {item.exercise.muscle_group} {/* Use muscle_group */}
                             </span>
                             <span className="mx-2 text-gray-300">•</span>
                             <span className="text-xs text-gray-500">
@@ -386,6 +443,7 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
                         <button
                           onClick={() => removeExercise(exerciseIndex)}
                           className="p-1.5 rounded-full text-gray-500 hover:bg-red-50 hover:text-red-500"
+                          title="Remover exercício"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -401,20 +459,20 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
                         </button>
                       </div>
                     </div>
-                    
+
                     {expandedExercise === item.exercise.id && (
                       <div className="p-4 bg-gray-50 border-b">
                         <p className="text-sm text-gray-700">{item.exercise.description}</p>
-                        {item.exercise.imageUrl && (
-                          <img 
-                            src={item.exercise.imageUrl} 
-                            alt={item.exercise.name} 
+                        {item.exercise.image_url && ( // Use image_url
+                          <img
+                            src={item.exercise.image_url} // Use image_url
+                            alt={item.exercise.name}
                             className="mt-3 rounded-lg w-full max-w-xs h-auto object-cover"
                           />
                         )}
                       </div>
                     )}
-                    
+
                     <div className="p-4">
                       <div className="grid grid-cols-12 gap-2 mb-2 text-xs font-medium text-gray-500">
                         <div className="col-span-1">#</div>
@@ -423,7 +481,7 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
                         <div className="col-span-3">Descanso (s)</div>
                         <div className="col-span-1"></div>
                       </div>
-                      
+
                       {item.sets.map((set, setIndex) => (
                         <div key={setIndex} className="grid grid-cols-12 gap-2 mb-2 items-center">
                           <div className="col-span-1 text-gray-500 text-sm">{setIndex + 1}</div>
@@ -465,7 +523,7 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
                           </div>
                         </div>
                       ))}
-                      
+
                       <button
                         onClick={() => addSet(exerciseIndex)}
                         className="mt-2 text-sm text-primary hover:text-primary/80 font-medium flex items-center"
@@ -482,109 +540,119 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
         </div>
 
         {/* Biblioteca de exercícios */}
-        <div className="lg:col-span-1">
-          <div className={`bg-white rounded-lg shadow-sm p-6 sticky top-20 transition-all transform ${showExerciseLibrary ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0 pointer-events-none lg:translate-x-0 lg:opacity-100 lg:pointer-events-auto'}`}>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">Biblioteca de Exercícios</h2>
-              <button 
-                onClick={() => setShowExerciseLibrary(false)}
-                className="p-1.5 rounded-full text-gray-500 hover:bg-gray-100 lg:hidden"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            
-            <div className="mb-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Buscar exercícios..."
-                  className="input-field pl-10"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              <div>
-                <select
-                  className="input-field text-sm py-1.5"
-                  value={muscleGroupFilter}
-                  onChange={(e) => setMuscleGroupFilter(e.target.value)}
+        {showExerciseLibrary && (
+          <div className="lg:col-span-1 fixed inset-0 bg-white z-50 lg:relative lg:inset-auto lg:bg-transparent lg:z-auto">
+            <div className="bg-white rounded-lg shadow-sm p-6 lg:sticky lg:top-20 h-full overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold">Biblioteca de Exercícios</h2>
+                <button
+                  onClick={() => setShowExerciseLibrary(false)}
+                  className="p-1.5 rounded-full text-gray-500 hover:bg-gray-100"
                 >
-                  <option value="todos">Todos os Músculos</option>
-                  <option value="peito">Peito</option>
-                  <option value="costas">Costas</option>
-                  <option value="ombros">Ombros</option>
-                  <option value="bíceps">Bíceps</option>
-                  <option value="tríceps">Tríceps</option>
-                  <option value="pernas">Pernas</option>
-                  <option value="glúteos">Glúteos</option>
-                  <option value="abdômen">Abdômen</option>
-                  <option value="core">Core</option>
-                  <option value="total">Total</option>
-                </select>
+                  <X size={16} />
+                </button>
               </div>
-              <div>
-                <select
-                  className="input-field text-sm py-1.5"
-                  value={equipmentFilter}
-                  onChange={(e) => setEquipmentFilter(e.target.value)}
-                >
-                  <option value="todos">Todos os Equipamentos</option>
-                  <option value="nenhum">Sem Equipamento</option>
-                  <option value="halteres">Halteres</option>
-                  <option value="barra">Barra</option>
-                  <option value="máquina">Máquina</option>
-                  <option value="kettlebell">Kettlebell</option>
-                  <option value="elástico">Elástico</option>
-                  <option value="banco">Banco</option>
-                </select>
+
+              <div className="mb-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Buscar exercícios..."
+                    className="input-field pl-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
               </div>
-            </div>
-            
-            <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
-              {filteredExercises.length === 0 ? (
+
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <div>
+                  <select
+                    className="input-field text-sm py-1.5"
+                    value={muscleGroupFilter}
+                    onChange={(e) => setMuscleGroupFilter(e.target.value)}
+                  >
+                    <option value="todos">Todos os Músculos</option>
+                    <option value="peito">Peito</option>
+                    <option value="costas">Costas</option>
+                    <option value="ombros">Ombros</option>
+                    <option value="bíceps">Bíceps</option>
+                    <option value="tríceps">Tríceps</option>
+                    <option value="pernas">Pernas</option>
+                    <option value="glúteos">Glúteos</option>
+                    <option value="abdômen">Abdômen</option>
+                    <option value="core">Core</option>
+                    <option value="total">Total</option>
+                    <option value="panturrilha">Panturrilha</option>
+                  </select>
+                </div>
+                <div>
+                  <select
+                    className="input-field text-sm py-1.5"
+                    value={equipmentFilter}
+                    onChange={(e) => setEquipmentFilter(e.target.value)}
+                  >
+                    <option value="todos">Todos os Equipamentos</option>
+                    <option value="nenhum">Sem Equipamento</option>
+                    <option value="halteres">Halteres</option>
+                    <option value="barra">Barra</option>
+                    <option value="máquina">Máquina</option>
+                    <option value="kettlebell">Kettlebell</option>
+                    <option value="elástico">Elástico</option>
+                    <option value="banco">Banco</option>
+                    <option value="corda">Corda</option>
+                    <option value="bola">Bola</option>
+                    <option value="outro">Outro</option>
+                  </select>
+                </div>
+              </div>
+
+              {loadingExercises ? (
+                 <div className="text-center py-4 text-gray-500 text-sm">Carregando exercícios...</div>
+              ) : exerciseError ? (
+                 <div className="text-center py-4 text-red-500 text-sm">{exerciseError}</div>
+              ) : filteredExercises.length === 0 ? (
                 <p className="text-gray-500 text-sm text-center py-4">
                   Nenhum exercício encontrado com os filtros aplicados.
                 </p>
               ) : (
-                filteredExercises.map(exercise => (
-                  <div 
-                    key={exercise.id}
-                    className="border rounded-lg p-3 hover:border-primary cursor-pointer transition-all"
-                    onClick={() => addExerciseToWorkout(exercise)}
-                  >
-                    <h3 className="font-medium text-gray-800 text-sm">{exercise.name}</h3>
-                    <div className="flex items-center mt-1">
-                      <span className="text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded">
-                        {exercise.muscleGroup}
-                      </span>
-                      <span className="mx-1 text-gray-300">•</span>
-                      <span className="text-xs text-gray-500">
-                        {exercise.equipment}
-                      </span>
+                <div className="space-y-2 max-h-[calc(100vh-250px)] lg:max-h-[500px] overflow-y-auto pr-1">
+                  {filteredExercises.map(exercise => (
+                    <div
+                      key={exercise.id}
+                      className="border rounded-lg p-3 hover:border-primary cursor-pointer transition-all"
+                      onClick={() => addExerciseToWorkout(exercise)}
+                    >
+                      <h3 className="font-medium text-gray-800 text-sm">{exercise.name}</h3>
+                      <div className="flex items-center mt-1">
+                        <span className="text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded">
+                          {exercise.muscle_group} {/* Use muscle_group */}
+                        </span>
+                        <span className="mx-1 text-gray-300">•</span>
+                        <span className="text-xs text-gray-500">
+                          {exercise.equipment}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Visão prévia (oculta, usada apenas para exportação) */}
       <div id="workout-preview" className="hidden p-6 bg-white">
         <h1 className="text-2xl font-bold text-center mb-4">{workoutName}</h1>
         <p className="text-center mb-6">{workoutDescription}</p>
-        
+
         <div className="mb-4">
           <div className="text-lg font-semibold mb-2">Tipo de Treino:</div>
           <p>{workoutType.charAt(0).toUpperCase() + workoutType.slice(1)}</p>
         </div>
-        
+
         <div className="mb-4">
           <div className="text-lg font-semibold mb-2">Grupos Musculares:</div>
           <div className="flex flex-wrap gap-2">
@@ -595,12 +663,12 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
             ))}
           </div>
         </div>
-        
+
         <div className="mb-6">
           <div className="text-lg font-semibold mb-2">Observações:</div>
           <p>{workoutNotes || 'Nenhuma observação.'}</p>
         </div>
-        
+
         <div>
           <div className="text-xl font-bold mb-4">Exercícios:</div>
           {selectedExercises.map((item, exerciseIndex) => (
@@ -610,7 +678,7 @@ const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ exercises }) => {
                 <div>
                   <div className="font-semibold">{item.exercise.name}</div>
                   <div className="text-sm text-gray-600 mb-2">{item.exercise.description}</div>
-                  
+
                   <table className="w-full">
                     <thead>
                       <tr className="border-b">
