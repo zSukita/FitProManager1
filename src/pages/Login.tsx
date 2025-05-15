@@ -1,14 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { Mail, Lock, Loader } from 'lucide-react';
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState('demo@fitpromanager.com');
-  const [password, setPassword] = useState('demo123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const { login, loading, error } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setEmail('');
+    setPassword('');
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,11 +126,6 @@ const Login: React.FC = () => {
           </Link>
         </p>
         
-        <div className="mt-4 text-xs text-gray-500">
-          <p>Credenciais de demonstração:</p>
-          <p>Email: demo@fitpromanager.com</p>
-          <p>Senha: demo123</p>
-        </div>
       </div>
     </div>
   );
