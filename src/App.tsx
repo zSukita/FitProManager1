@@ -15,6 +15,7 @@ import WorkoutDetail from './pages/WorkoutDetail';
 import Plans from './pages/Plans';
 import WorkoutBuilder from './pages/WorkoutBuilder';
 import { exerciseLibrary } from './data/mockData';
+import NewPayment from './pages/NewPayment'; // Import the new page
 
 function App() {
   const { user, loading } = useAuth();
@@ -31,16 +32,20 @@ function App() {
         <Route path="clients" element={<Clients />} />
         <Route path="clients/new" element={<NewClient />} />
         <Route path="clients/:clientId" element={<ClientDetail />} />
+        {/* Add nested routes for finances here */}
         <Route path="finances" element={<Finances />} />
+        <Route path="finances/new" element={<NewPayment />} /> {/* Add the new payment route */}
         <Route path="settings" element={<Settings />} />
         <Route path="settings/plans" element={<Plans />} />
       </Route>
 
+      {/* Workouts routes are separate */}
       <Route path="/workouts" element={user ? <DashboardLayout /> : <Navigate to="/auth/login" />}>
          <Route index element={<Workouts />} />
          <Route path="new" element={<WorkoutBuilder exercises={exerciseLibrary} />} />
          <Route path=":workoutId" element={<WorkoutDetail />} />
       </Route>
+
 
       {/* Rotas de Autenticação */}
       <Route path="/auth" element={!user ? <AuthLayout /> : <Navigate to="/" />}>

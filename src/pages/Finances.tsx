@@ -26,6 +26,7 @@ import {
 } from 'chart.js';
 import dayjs from 'dayjs';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 // Register Chart.js components
 ChartJS.register(
@@ -39,6 +40,7 @@ ChartJS.register(
 
 
 const Finances: React.FC = () => {
+  const navigate = useNavigate(); // Initialize useNavigate
   const [filter, setFilter] = useState<string>('todos');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('data-desc');
@@ -143,7 +145,10 @@ const Finances: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-800">Finanças</h1>
           <p className="text-gray-600">Gerencie pagamentos e acompanhe sua receita</p>
         </div>
-        <button className="btn-primary flex items-center gap-2 whitespace-nowrap">
+        <button
+          className="btn-primary flex items-center gap-2 whitespace-nowrap"
+          onClick={() => navigate('/finances/new')} // Navigate to the new payment page
+        >
           <Plus size={18} />
           Novo Pagamento
         </button>
