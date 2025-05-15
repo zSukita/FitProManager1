@@ -6,11 +6,11 @@ import toast from 'react-hot-toast'; // Importa toast para notificações
 // Criando o contexto de autenticação
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  login: async () => {},
-  logout: () => {},
+  login: async () => { },
+  logout: () => { },
   loading: false,
   error: null,
-  signUp: async () => {}, // Adiciona a função signUp
+  signUp: async () => { }, // Adiciona a função signUp
 });
 
 // Hook para utilizar o contexto de autenticação
@@ -55,12 +55,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
 
     try {
+      console.log('Tentando fazer login com:', { email, password }); // Adiciona este log
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error('Supabase login error:', error); // Log the detailed Supabase error
+        toast.error(`Erro ao fazer login: ${error.message}`); // Mostra o erro do Supabase
         throw error;
       }
 
@@ -68,6 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.success('Login realizado com sucesso!');
 
     } catch (err: any) {
+      console.error('Login error:', err); // Log do erro geral
       setError(err.message);
       toast.error(`Erro ao fazer login: ${err.message}`);
     } finally {
@@ -81,6 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
 
     try {
+      console.log('Tentando cadastrar com:', { email, password, name }); // Adiciona este log
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -94,6 +99,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
+        console.error('Supabase signup error:', error); // Log the detailed Supabase error
+        toast.error(`Erro ao cadastrar: ${error.message}`); // Mostra o erro do Supabase
         throw error;
       }
 
@@ -102,15 +109,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // o usuário estará logado automaticamente após o cadastro.
       // Se a confirmação estiver ativa, o usuário precisará confirmar o email.
       if (data.user) {
-         toast.success('Conta criada com sucesso! Por favor, faça login.');
-         // Se a confirmação de email estiver desabilitada, o onAuthStateChange
-         // já terá definido o usuário. Se estiver habilitada, o usuário será null aqui.
+        toast.success('Conta criada com sucesso! Por favor, faça login.');
+        // Se a confirmação de email estiver desabilitada, o onAuthStateChange
+        // já terá definido o usuário. Se estiver habilitada, o usuário será null aqui.
       } else if (data.session === null) {
-         toast('Confirme seu email para ativar a conta.', { icon: '📧' });
+        toast('Confirme seu email para ativar a conta.', { icon: '📧' });
       }
 
 
     } catch (err: any) {
+      console.error('Signup error:', err); // Log do erro geral
       setError(err.message);
       toast.error(`Erro ao cadastrar: ${err.message}`);
       throw err; // Re-lança o erro para que o componente Register possa tratá-lo
@@ -128,6 +136,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signOut();
 
       if (error) {
+        console.error('Supabase logout error:', error); // Log the detailed Supabase error
+        toast.error(`Erro ao fazer logout: ${error.message}`); // Mostra o erro do Supabase
         throw error;
       }
 
@@ -135,6 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.success('Logout realizado com sucesso!');
 
     } catch (err: any) {
+      console.error('Logout error:', err); // Log do erro geral
       setError(err.message);
       toast.error(`Erro ao fazer logout: ${err.message}`);
     } finally {
