@@ -3,6 +3,7 @@ import DashboardLayout from './layouts/DashboardLayout';
 import AuthLayout from './layouts/AuthLayout';
 import Dashboard from './pages/Dashboard';
 import Clients from './pages/Clients';
+import NewClient from './pages/NewClient';
 import Workouts from './pages/Workouts';
 import Finances from './pages/Finances';
 import Settings from './pages/Settings';
@@ -12,41 +13,34 @@ import { useAuth } from './contexts/AuthContext';
 import ClientDetail from './pages/ClientDetail';
 import WorkoutDetail from './pages/WorkoutDetail';
 import Plans from './pages/Plans';
-// Removed ExerciseLibrary import
 import WorkoutBuilder from './pages/WorkoutBuilder';
-import { exerciseLibrary } from './data/mockData'; // Import exerciseLibrary
+import { exerciseLibrary } from './data/mockData';
 
 function App() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    // Opcional: Adicionar um spinner ou tela de carregamento
     return <div>Carregando...</div>;
   }
 
   return (
     <Routes>
       {/* Rotas Autenticadas que usam o DashboardLayout */}
-      {/* Rota raiz e outras rotas de nível superior */}
       <Route path="/" element={user ? <DashboardLayout /> : <Navigate to="/auth/login" />}>
-        <Route index element={<Dashboard />} /> {/* Rota para o Dashboard em "/" */}
+        <Route index element={<Dashboard />} />
         <Route path="clients" element={<Clients />} />
+        <Route path="clients/new" element={<NewClient />} />
         <Route path="clients/:clientId" element={<ClientDetail />} />
         <Route path="finances" element={<Finances />} />
         <Route path="settings" element={<Settings />} />
         <Route path="settings/plans" element={<Plans />} />
-        {/* Removed ExerciseLibrary route */}
       </Route>
 
-      {/* Rota específica para Treinos, também usando DashboardLayout */}
-      {/* Isso pode ajudar a isolar o comportamento das rotas de treino */}
       <Route path="/workouts" element={user ? <DashboardLayout /> : <Navigate to="/auth/login" />}>
-         <Route index element={<Workouts />} /> {/* Rota para a lista de treinos em "/workouts" */}
-         {/* Pass exerciseLibrary to WorkoutBuilder */}
-         <Route path="new" element={<WorkoutBuilder exercises={exerciseLibrary} />} /> {/* Rota para criar novo treino em "/workouts/new" */}
-         <Route path=":workoutId" element={<WorkoutDetail />} /> {/* Rota para detalhes do treino em "/workouts/:workoutId" */}
+         <Route index element={<Workouts />} />
+         <Route path="new" element={<WorkoutBuilder exercises={exerciseLibrary} />} />
+         <Route path=":workoutId" element={<WorkoutDetail />} />
       </Route>
-
 
       {/* Rotas de Autenticação */}
       <Route path="/auth" element={!user ? <AuthLayout /> : <Navigate to="/" />}>
