@@ -9,7 +9,6 @@ import {
   X,
   LogOut,
   Settings,
-  // Removed BookOpen import
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -24,8 +23,15 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
     { name: 'Clientes', href: '/clients', icon: Users },
     { name: 'Treinos', href: '/workouts', icon: Dumbbell },
     { name: 'Finanças', href: '/finances', icon: BarChart3 },
-    // Removed Exercise Library link
   ];
+
+  // Function to format the planId string
+  const formatPlanName = (planId: string | undefined) => {
+    if (!planId) {
+      return 'N/A'; // Or a default plan name
+    }
+    return planId.charAt(0).toUpperCase() + planId.slice(1);
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -56,7 +62,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
         <div className="ml-3">
           <p className="text-sm font-medium">{user?.name || 'Usuário'}</p>
           <p className="text-xs text-gray-500">
-            Plano {user?.plan.charAt(0).toUpperCase() + user?.plan.slice(1)}
+            Plano {formatPlanName(user?.planId)}
           </p>
         </div>
       </div>

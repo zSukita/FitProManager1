@@ -9,7 +9,8 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   logout: () => {},
   loading: false,
-  error: null
+  error: null,
+  signUp: async () => {}, // Adiciona a função signUp
 });
 
 // Hook para utilizar o contexto de autenticação
@@ -74,6 +75,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Função de cadastro
+  const signUp = async (email: string, password: string, name: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { // Adiciona metadados do usuário, como o nome
+            name: name,
+            role: 'trainer', // Define um papel padrão
+            planId: 'free', // Define um plano padrão
+          }
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // Supabase por padrão envia email de confirmação.
+      // Se você desabilitou a confirmação por email no Supabase,
+      // o usuário estará logado automaticamente após o cadastro.
+      // Se a confirmação estiver ativa, o usuário precisará confirmar o email.
+      if (data.user) {
+         toast.success('Conta criada com sucesso! Por favor, faça login.');
+         // Se a confirmação de email estiver desabilitada, o onAuthStateChange
+         // já terá definido o usuário. Se estiver habilitada, o usuário será null aqui.
+      } else if (data.session === null) {
+         toast('Confirme seu email para ativar a conta.', { icon: '📧' });
+      }
+
+
+    } catch (err: any) {
+      setError(err.message);
+      toast.error(`Erro ao cadastrar: ${err.message}`);
+      throw err; // Re-lança o erro para que o componente Register possa tratá-lo
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   // Função de logout
   const logout = async () => {
     setLoading(true);
@@ -97,7 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, error }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, error, signUp }}>
       {children}
     </AuthContext.Provider>
   );

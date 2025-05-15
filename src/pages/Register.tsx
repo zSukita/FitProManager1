@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, User, Lock, Loader, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext'; // Importa o hook useAuth
 
 const Register: React.FC = () => {
-  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
   });
+  const { signUp, loading, error } = useAuth(); // Usa o hook useAuth
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -25,13 +27,28 @@ const Register: React.FC = () => {
       return;
     }
     
-    setLoading(true);
-    
-    // Simulando uma chamada de API
-    setTimeout(() => {
-      setLoading(false);
-      toast.success('Conta criada com sucesso! Por favor, faça login.');
-    }, 1500);
+    // Validação básica de senha (mínimo 8 caracteres, 1 maiúscula, 1 número)
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(formData.password)) {
+      toast.error('A senha deve ter no mínimo 8 caracteres, incluindo uma letra maiúscula e um número.');
+      return;
+    }
+
+    try {
+      // Chama a função signUp do contexto de autenticação
+      await signUp(formData.email, formData.password, formData.name);
+      // Se o cadastro for bem-sucedido (e email confirmation estiver desabilitado),
+      // o usuário será redirecionado automaticamente pelo AuthContext.
+      // Se a confirmação estiver ativa, o usuário permanecerá nesta página
+      // e verá a mensagem de toast para confirmar o email.
+      // Podemos adicionar um redirecionamento explícito para login aqui
+      // se a confirmação de email estiver desabilitada no Supabase.
+       navigate('/auth/login');
+
+    } catch (err) {
+      // O erro já é tratado e exibido pelo toast no AuthContext
+      console.error("Erro no cadastro:", err); // Log para debug
+    }
   };
 
   return (
@@ -141,8 +158,14 @@ const Register: React.FC = () => {
         </div>
       </form>
 
+      {error && (
+        <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">
+          {error}
+        </div>
+      )}
+
       <div className="mt-6 text-center">
-        <Link to="/login" className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80">
+        <Link to="/auth/login" className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80">
           <ArrowLeft className="h-4 w-4 mr-1" />
           Voltar para o login
         </Link>
