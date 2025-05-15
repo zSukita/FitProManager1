@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { createClient, getCurrentUser } from '../services/supabaseService'; // Import Supabase service
 
 const NewClient: React.FC = () => {
   const navigate = useNavigate();
@@ -14,8 +15,9 @@ const NewClient: React.FC = () => {
     gender: 'masculino',
     goal: '',
     status: 'ativo',
-    medicalHistory: '',
+    medical_history: '', // Match database column name
     notes: '',
+    avatar_url: '', // Add avatar_url field
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -28,11 +30,27 @@ const NewClient: React.FC = () => {
     setLoading(true);
 
     try {
-      // Simulando o salvamento do cliente
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const user = await getCurrentUser();
+      if (!user) {
+        toast.error('Usuário não autenticado.');
+        setLoading(false);
+        return;
+      }
+
+      // Prepare data for insertion, converting age to number
+      const clientDataToSave = {
+        ...formData,
+        age: formData.age ? parseInt(formData.age, 10) : null, // Convert age to number, handle empty string
+        // start_date will default in DB
+        // measurements, workout_ids, plan_id can be added later if needed in the form
+      };
+
+      await createClient(clientDataToSave, user.id);
+
       toast.success('Cliente cadastrado com sucesso!');
       navigate('/clients');
     } catch (error) {
+      console.error('Error saving client:', error);
       toast.error('Erro ao cadastrar cliente. Tente novamente.');
     } finally {
       setLoading(false);
@@ -42,7 +60,7 @@ const NewClient: React.FC = () => {
   return (
     <div className="animate-fade-in">
       <div className="flex items-center gap-3 mb-6">
-        <button 
+        <button
           onClick={() => navigate('/clients')}
           className="p-2 rounded-full hover:bg-gray-100"
         >
@@ -78,6 +96,7 @@ const NewClient: React.FC = () => {
               value={formData.email}
               onChange={handleChange}
               className="input-field"
+              // email is not required in DB, but maybe required in UI? Let's keep it required for now.
               required
             />
           </div>
@@ -91,7 +110,7 @@ const NewClient: React.FC = () => {
               value={formData.phone}
               onChange={handleChange}
               className="input-field"
-              required
+              // phone is not required in DB, let's make it optional in UI too
             />
           </div>
 
@@ -104,7 +123,7 @@ const NewClient: React.FC = () => {
               value={formData.age}
               onChange={handleChange}
               className="input-field"
-              required
+              // age is not required in DB, let's make it optional in UI too
             />
           </div>
 
@@ -139,6 +158,18 @@ const NewClient: React.FC = () => {
               <option value="pendente">Pendente</option>
             </select>
           </div>
+
+           <div>
+            <label htmlFor="avatar_url" className="label">URL do Avatar</label>
+            <input
+              type="text"
+              id="avatar_url"
+              name="avatar_url"
+              value={formData.avatar_url}
+              onChange={handleChange}
+              className="input-field"
+            />
+          </div>
         </div>
 
         <div className="mt-6">
@@ -150,16 +181,16 @@ const NewClient: React.FC = () => {
             onChange={handleChange}
             className="input-field"
             rows={3}
-            required
+            // goal is not required in DB, let's make it optional in UI too
           />
         </div>
 
         <div className="mt-6">
-          <label htmlFor="medicalHistory" className="label">Histórico Médico</label>
+          <label htmlFor="medical_history" className="label">Histórico Médico</label> {/* Match database column name */}
           <textarea
-            id="medicalHistory"
-            name="medicalHistory"
-            value={formData.medicalHistory}
+            id="medical_history"
+            name="medical_history"
+            value={formData.medical_history}
             onChange={handleChange}
             className="input-field"
             rows={3}

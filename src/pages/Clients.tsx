@@ -1,23 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { UserPlus, Search, Filter, ChevronDown, MoreHorizontal, Mail, Phone, CalendarClock, CircleDollarSign } from 'lucide-react';
-import { clients } from '../data/mockData';
 import { Client } from '../types';
+import { fetchClients, getCurrentUser } from '../services/supabaseService'; // Import Supabase service
+import toast from 'react-hot-toast';
 
 const Clients: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('todos');
-  const [filterGoal, setFilterGoal] = useState<string>('todos');
   const [sortBy, setSortBy] = useState<string>('nome');
+  const [clients, setClients] = useState<Client[]>([]); // Use state for clients
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadClients = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          const data = await fetchClients(user.id);
+          setClients(data);
+        } else {
+          // Handle case where user is not logged in, maybe redirect to login
+          toast.error('Usuário não autenticado.');
+          setClients([]); // Clear clients if not authenticated
+        }
+      } catch (err) {
+        console.error('Failed to fetch clients:', err);
+        setError('Erro ao carregar clientes.');
+        toast.error('Erro ao carregar clientes.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadClients();
+  }, []); // Empty dependency array means this runs once on mount
 
   // Filtrar clientes
   const filteredClients = clients.filter(client => {
-    const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          client.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false); // Handle potential null email
     const matchesStatus = filterStatus === 'todos' || client.status === filterStatus;
-    const matchesGoal = filterGoal === 'todos' || client.goal.toLowerCase().includes(filterGoal.toLowerCase());
-    
-    return matchesSearch && matchesStatus && matchesGoal;
+    // Note: Goal filter removed as it wasn't fully implemented and might not be needed based on UI
+    return matchesSearch && matchesStatus;
   });
 
   // Ordenar clientes
@@ -25,7 +53,10 @@ const Clients: React.FC = () => {
     if (sortBy === 'nome') {
       return a.name.localeCompare(b.name);
     } else if (sortBy === 'data') {
-      return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
+      // Assuming startDate is a valid date string or Date object
+      const dateA = new Date(a.start_date || a.created_at).getTime(); // Use created_at as fallback
+      const dateB = new Date(b.start_date || b.created_at).getTime();
+      return dateB - dateA; // Newest first
     } else if (sortBy === 'status') {
       return a.status.localeCompare(b.status);
     }
@@ -45,6 +76,14 @@ const Clients: React.FC = () => {
         return null;
     }
   };
+
+  if (loading) {
+    return <div className="text-center text-gray-500">Carregando clientes...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center text-red-500">{error}</div>;
+  }
 
   return (
     <div className="animate-fade-in">
@@ -118,12 +157,12 @@ const Clients: React.FC = () => {
       {sortedClients.length === 0 ? (
         <div className="bg-white rounded-lg shadow-sm p-8 text-center">
           <p className="text-gray-500">Nenhum cliente encontrado com os filtros aplicados.</p>
-          <button 
+          <button
             className="mt-2 text-primary hover:underline"
             onClick={() => {
               setSearchTerm('');
               setFilterStatus('todos');
-              setFilterGoal('todos');
+              // setFilterGoal('todos'); // Goal filter removed
             }}
           >
             Limpar filtros
@@ -132,17 +171,17 @@ const Clients: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sortedClients.map((client: Client) => (
-            <Link 
-              to={`/clients/${client.id}`} 
+            <Link
+              to={`/clients/${client.id}`}
               key={client.id}
               className="client-card bg-white rounded-lg shadow-sm overflow-hidden"
             >
               <div className="h-24 bg-gradient-to-r from-primary/20 to-secondary/20"></div>
               <div className="px-6 pt-0 pb-6 -mt-12">
                 <div className="flex justify-between">
-                  <img 
-                    src={client.avatar || 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'} 
-                    alt={client.name} 
+                  <img
+                    src={client.avatar_url || 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'}
+                    alt={client.name}
                     className="w-20 h-20 rounded-full border-4 border-white object-cover"
                   />
                   <div className="mt-12 flex">
@@ -152,35 +191,40 @@ const Clients: React.FC = () => {
                     </button>
                   </div>
                 </div>
-                
+
                 <div className="mt-3">
                   <h3 className="text-lg font-semibold">{client.name}</h3>
                   <p className="text-sm text-gray-600 line-clamp-1">{client.goal}</p>
                 </div>
 
                 <div className="mt-4 space-y-2">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Mail size={16} className="mr-2 text-gray-400" />
-                    <span className="truncate">{client.email}</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Phone size={16} className="mr-2 text-gray-400" />
-                    <span>{client.phone}</span>
-                  </div>
+                  {client.email && ( // Only show email if it exists
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Mail size={16} className="mr-2 text-gray-400" />
+                      <span className="truncate">{client.email}</span>
+                    </div>
+                  )}
+                  {client.phone && ( // Only show phone if it exists
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Phone size={16} className="mr-2 text-gray-400" />
+                      <span>{client.phone}</span>
+                    </div>
+                  )}
                   <div className="flex items-center text-sm text-gray-600">
                     <CalendarClock size={16} className="mr-2 text-gray-400" />
-                    <span>Cliente desde {new Date(client.startDate).toLocaleDateString('pt-BR')}</span>
+                    <span>Cliente desde {new Date(client.start_date || client.created_at).toLocaleDateString('pt-BR')}</span>
                   </div>
-                  {client.payments && client.payments.length > 0 && (
+                  {/* Payment info will be fetched separately or joined if needed */}
+                  {/* client.payments && client.payments.length > 0 && (
                     <div className="flex items-center text-sm text-gray-600">
                       <CircleDollarSign size={16} className="mr-2 text-gray-400" />
                       <span>Último pagamento: {
-                        client.payments[client.payments.length - 1].date 
+                        client.payments[client.payments.length - 1].date
                           ? new Date(client.payments[client.payments.length - 1].date).toLocaleDateString('pt-BR')
                           : 'Pendente'
                       }</span>
                     </div>
-                  )}
+                  )*/}
                 </div>
               </div>
             </Link>
