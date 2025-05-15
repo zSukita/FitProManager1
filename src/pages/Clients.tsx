@@ -53,7 +53,7 @@ const Clients: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-800">Clientes</h1>
           <p className="text-gray-600">Gerencie seus clientes e veja o histórico completo</p>
         </div>
-        <Link to="/clientes/novo" className="btn-primary flex items-center gap-2 whitespace-nowrap">
+        <Link to="/clients/new" className="btn-primary flex items-center gap-2 whitespace-nowrap">
           <UserPlus size={18} />
           Novo Cliente
         </Link>
@@ -133,7 +133,7 @@ const Clients: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sortedClients.map((client: Client) => (
             <Link 
-              to={`/clientes/${client.id}`} 
+              to={`/clients/${client.id}`} 
               key={client.id}
               className="client-card bg-white rounded-lg shadow-sm overflow-hidden"
             >
