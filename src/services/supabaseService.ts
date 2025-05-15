@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { Client, Payment, Workout } from '../types';
 import { User } from '@supabase/supabase-js';
+import { Profile } from '../types';
 
 // --- Client Service ---
 
@@ -97,4 +98,20 @@ export const getCurrentUser = async (): Promise<User | null> => {
     return null;
   }
   return user;
+};
+
+export const updateUserProfile = async (userId: string, profileData: Partial<Profile>): Promise<Profile | null> => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(profileData)
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating profile:', error);
+    throw error;
+  }
+
+  return data as Profile;
 };
