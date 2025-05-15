@@ -8,7 +8,8 @@ import {
   BarChart3,
   X,
   LogOut,
-  Settings
+  Settings,
+  // Removed BookOpen import
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -20,9 +21,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home },
-    { name: 'Clientes', href: '/clients', icon: Users }, // Corrigido para /clients
-    { name: 'Treinos', href: '/workouts', icon: Dumbbell }, // Corrigido para /workouts
-    { name: 'Finanças', href: '/finances', icon: BarChart3 } // Corrigido para /finances
+    { name: 'Clientes', href: '/clients', icon: Users },
+    { name: 'Treinos', href: '/workouts', icon: Dumbbell },
+    { name: 'Finanças', href: '/finances', icon: BarChart3 },
+    // Removed Exercise Library link
   ];
 
   return (
@@ -79,7 +81,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
       {/* Links do rodapé */}
       <div className="px-2 py-4 border-t">
         <NavLink
-          to="/settings" // Corrigido para /settings
+          to="/settings"
           className={({ isActive }) =>
             `sidebar-link ${isActive ? 'active' : ''}`
           }

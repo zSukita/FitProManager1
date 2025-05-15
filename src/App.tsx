@@ -11,7 +11,10 @@ import Register from './pages/Register';
 import { useAuth } from './contexts/AuthContext';
 import ClientDetail from './pages/ClientDetail';
 import WorkoutDetail from './pages/WorkoutDetail';
-import Plans from './pages/Plans'; // Importe a nova página de Planos
+import Plans from './pages/Plans';
+// Removed ExerciseLibrary import
+import WorkoutBuilder from './pages/WorkoutBuilder';
+import { exerciseLibrary } from './data/mockData'; // Import exerciseLibrary
 
 function App() {
   const { user, loading } = useAuth();
@@ -23,20 +26,27 @@ function App() {
 
   return (
     <Routes>
-      {/* Rotas Autenticadas */}
-      {/* A rota pai "/" renderiza o DashboardLayout */}
+      {/* Rotas Autenticadas que usam o DashboardLayout */}
+      {/* Rota raiz e outras rotas de nível superior */}
       <Route path="/" element={user ? <DashboardLayout /> : <Navigate to="/auth/login" />}>
-        {/* A rota index "/" dentro do DashboardLayout renderiza o Dashboard */}
-        <Route index element={<Dashboard />} />
-        {/* Rotas aninhadas dentro do DashboardLayout */}
+        <Route index element={<Dashboard />} /> {/* Rota para o Dashboard em "/" */}
         <Route path="clients" element={<Clients />} />
         <Route path="clients/:clientId" element={<ClientDetail />} />
-        <Route path="workouts" element={<Workouts />} />
-        <Route path="workouts/:workoutId" element={<WorkoutDetail />} />
         <Route path="finances" element={<Finances />} />
         <Route path="settings" element={<Settings />} />
-        <Route path="settings/plans" element={<Plans />} /> {/* Adicione a rota para a página de Planos */}
+        <Route path="settings/plans" element={<Plans />} />
+        {/* Removed ExerciseLibrary route */}
       </Route>
+
+      {/* Rota específica para Treinos, também usando DashboardLayout */}
+      {/* Isso pode ajudar a isolar o comportamento das rotas de treino */}
+      <Route path="/workouts" element={user ? <DashboardLayout /> : <Navigate to="/auth/login" />}>
+         <Route index element={<Workouts />} /> {/* Rota para a lista de treinos em "/workouts" */}
+         {/* Pass exerciseLibrary to WorkoutBuilder */}
+         <Route path="new" element={<WorkoutBuilder exercises={exerciseLibrary} />} /> {/* Rota para criar novo treino em "/workouts/new" */}
+         <Route path=":workoutId" element={<WorkoutDetail />} /> {/* Rota para detalhes do treino em "/workouts/:workoutId" */}
+      </Route>
+
 
       {/* Rotas de Autenticação */}
       <Route path="/auth" element={!user ? <AuthLayout /> : <Navigate to="/" />}>

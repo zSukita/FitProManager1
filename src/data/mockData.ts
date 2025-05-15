@@ -1,469 +1,367 @@
-import { Client, Exercise, Workout, Payment, ExerciseLibrary, FinancialSummary } from '../types';
-import dayjs from 'dayjs';
+import { Client, FinancialSummary, Exercise, Workout, Payment, Plan } from '../types';
 
-// Biblioteca de exercícios
-export const exerciseLibrary: ExerciseLibrary = {
-  'ex1': {
-    id: 'ex1',
-    name: 'Supino Reto',
+// Dados mock para clientes
+export const clients: Client[] = [
+  {
+    id: 'client-1',
+    name: 'Ana Silva',
+    email: 'ana.silva@example.com',
+    phone: '11 98765-4321',
+    age: 28,
+    gender: 'feminino',
+    goal: 'Perda de peso',
+    status: 'ativo',
+    startDate: '2023-01-15',
+    avatar: 'https://images.pexels.com/photos/4164847/pexels-photo-4164847.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+    medicalHistory: 'Sem histórico relevante',
+    notes: 'Gosta de treinos ao ar livre.',
+    measurements: [
+      { date: '2023-01-15', weight: 70, height: 1.65, bodyFat: 30, waist: 80 },
+      { date: '2023-02-15', weight: 68, height: 1.65, bodyFat: 28, waist: 78 },
+      { date: '2023-03-15', weight: 67, height: 1.65, bodyFat: 27, waist: 77 },
+    ],
+    workouts: ['workout-1'],
+    payments: [
+      { id: 'pay-1', clientId: 'client-1', amount: 350, date: '2023-01-10', status: 'pago', recurrent: true, planType: 'mensal' },
+      { id: 'pay-2', clientId: 'client-1', amount: 350, date: '2023-02-10', status: 'pago', recurrent: true, planType: 'mensal' },
+      { id: 'pay-3', clientId: 'client-1', amount: 350, date: '2023-03-10', status: 'pago', recurrent: true, planType: 'mensal' },
+    ],
+    planId: 'profissional' // Associado ao plano Profissional
+  },
+  {
+    id: 'client-2',
+    name: 'Bruno Costa',
+    email: 'bruno.costa@example.com',
+    phone: '11 99876-5432',
+    age: 35,
+    gender: 'masculino',
+    goal: 'Hipertrofia',
+    status: 'ativo',
+    startDate: '2023-02-01',
+    avatar: 'https://images.pexels.com/photos/1516440/pexels-photo-1516440.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+    medicalHistory: 'Dor lombar ocasional.',
+    notes: 'Prefere treinar pela manhã.',
+    measurements: [
+      { date: '2023-02-01', weight: 80, height: 1.78, bodyFat: 18, chest: 100 },
+      { date: '2023-03-01', weight: 81, height: 1.78, bodyFat: 17, chest: 101 },
+    ],
+    workouts: ['workout-2'],
+    payments: [
+      { id: 'pay-4', clientId: 'client-2', amount: 400, date: '2023-01-28', status: 'pago', recurrent: true, planType: 'mensal' },
+      { id: 'pay-5', clientId: 'client-2', amount: 400, date: '2023-02-28', status: 'pago', recurrent: true, planType: 'mensal' },
+    ],
+    planId: 'profissional' // Associado ao plano Profissional
+  },
+  {
+    id: 'client-3',
+    name: 'Mariana Santos',
+    email: 'mariana.santos@example.com',
+    phone: '11 97654-3210',
+    age: 22,
+    gender: 'feminino',
+    goal: 'Resistência',
+    status: 'pendente',
+    startDate: '2023-03-10',
+    avatar: 'https://images.pexels.com/photos/3760263/pexels-photo-3760263.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+    medicalHistory: '',
+    notes: 'Interesse em corrida.',
+    measurements: [],
+    workouts: [],
+    payments: [
+      { id: 'pay-6', clientId: 'client-3', amount: 300, date: '2023-03-08', status: 'pendente', recurrent: false, planType: 'sessão', dueDate: '2023-03-10' },
+    ],
+    planId: 'sessao_unica' // Associado ao plano Sessão Única
+  },
+   {
+    id: 'client-4',
+    name: 'Pedro Almeida',
+    email: 'pedro.almeida@example.com',
+    phone: '11 96543-2109',
+    age: 45,
+    gender: 'masculino',
+    goal: 'Saúde geral',
+    status: 'ativo',
+    startDate: '2022-11-20',
+    avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+    medicalHistory: 'Hipertensão controlada.',
+    notes: 'Precisa de acompanhamento constante.',
+    measurements: [],
+    workouts: ['workout-3'],
+    payments: [
+      { id: 'pay-7', clientId: 'client-4', amount: 380, date: '2023-01-18', status: 'pago', recurrent: true, planType: 'mensal' },
+      { id: 'pay-8', clientId: 'client-4', amount: 380, date: '2023-02-18', status: 'pago', recurrent: true, planType: 'mensal' },
+      { id: 'pay-9', clientId: 'client-4', amount: 380, date: '2023-03-18', status: 'atrasado', recurrent: true, planType: 'mensal', dueDate: '2023-03-18' },
+    ],
+    planId: 'profissional' // Associado ao plano Profissional
+  },
+   {
+    id: 'client-5',
+    name: 'Sofia Fernandes',
+    email: 'sofia.fernandes@example.com',
+    phone: '11 95432-1098',
+    age: 31,
+    gender: 'feminino',
+    goal: 'Tonificação',
+    status: 'ativo',
+    startDate: '2023-01-05',
+    avatar: 'https://images.pexels.com/photos/3772818/pexels-photo-3772818.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+    medicalHistory: '',
+    notes: 'Gosta de variar os exercícios.',
+    measurements: [],
+    workouts: ['workout-1', 'workout-2'],
+    payments: [
+      { id: 'pay-10', clientId: 'client-5', amount: 350, date: '2023-01-01', status: 'pago', recurrent: true, planType: 'mensal' },
+      { id: 'pay-11', clientId: 'client-5', amount: 350, date: '2023-02-01', status: 'pago', recurrent: true, planType: 'mensal' },
+      { id: 'pay-12', clientId: 'client-5', amount: 350, date: '2023-03-01', status: 'pago', recurrent: true, planType: 'mensal' },
+    ],
+    planId: 'profissional' // Associado ao plano Profissional
+  },
+];
+
+// Dados mock para finanças
+export const financialSummary: FinancialSummary = {
+  totalRevenue: 15000, // Exemplo
+  pendingRevenue: 750, // Exemplo
+  paidToday: 0, // Exemplo
+  dueToday: 350, // Exemplo (Mariana Costa)
+  monthlyRevenue: [2000, 2500, 3000, 3500, 4000, 4500], // Exemplo para 6 meses
+  paymentsByStatus: {
+    pago: 10, // Exemplo
+    pendente: 1, // Exemplo (Mariana Costa)
+    atrasado: 1, // Exemplo (Pedro Almeida)
+    cancelado: 0, // Exemplo
+  },
+};
+
+// Dados mock para treinos (simplificado)
+export const workouts: Workout[] = [
+  {
+    id: 'workout-1',
+    name: 'Treino Full Body Iniciante',
+    description: 'Um treino completo para iniciantes.',
+    created: '2023-01-10',
+    type: 'força',
+    targetMuscleGroups: ['total'],
+    exercises: [], // Adicionar exercícios reais depois
+    creatorId: 'trainer-1',
+    clientIds: ['client-1', 'client-5'],
+  },
+  {
+    id: 'workout-2',
+    name: 'Treino de Peito e Tríceps',
+    description: 'Foco em hipertrofia para peito e tríceps.',
+    created: '2023-02-05',
+    type: 'hipertrofia',
+    targetMuscleGroups: ['peito', 'tríceps'],
+    exercises: [], // Adicionar exercícios reais depois
+    creatorId: 'trainer-1',
+    clientIds: ['client-2', 'client-5'],
+  },
+   {
+    id: 'workout-3',
+    name: 'Treino de Mobilidade e Core',
+    description: 'Melhora da mobilidade e fortalecimento do core.',
+    created: '2022-11-15',
+    type: 'flexibilidade',
+    targetMuscleGroups: ['core'],
+    exercises: [], // Adicionar exercícios reais depois
+    creatorId: 'trainer-1',
+    clientIds: ['client-4'],
+  },
+];
+
+// Dados mock para meses (últimos 6 meses)
+const today = new Date();
+export const last6Months = Array.from({ length: 6 }).map((_, i) => {
+  const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+  return date.toLocaleString('pt-BR', { month: 'short', year: '2-digit' });
+}).reverse(); // Para ter do mais antigo para o mais recente
+
+// Dados mock para contagem de clientes por mês (exemplo)
+export const clientsCountByMonth = [10, 12, 15, 18, 20, 22]; // Exemplo para 6 meses
+
+// Dados mock para a biblioteca de exercícios
+export const exerciseLibrary: Exercise[] = [
+  {
+    id: 'ex-1',
+    name: 'Supino Reto com Barra',
     category: 'força',
     muscleGroup: 'peito',
     equipment: 'barra',
     difficulty: 'intermediário',
-    description: 'Deite-se em um banco reto, segure a barra com as mãos um pouco mais afastadas que a largura dos ombros, e empurre a barra para cima até que os braços estejam estendidos.',
-    imageUrl: 'https://images.pexels.com/photos/4162487/pexels-photo-4162487.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+    description: 'Exercício fundamental para o peitoral.',
+    videoUrl: 'https://www.youtube.com/watch?v=g_oXg_11f0Q', // Exemplo
+    imageUrl: 'https://images.pexels.com/photos/1557109/pexels-photo-1557109.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', // Exemplo
   },
-  'ex2': {
-    id: 'ex2',
-    name: 'Agachamento',
+  {
+    id: 'ex-2',
+    name: 'Agachamento Livre',
     category: 'força',
     muscleGroup: 'pernas',
     equipment: 'barra',
-    difficulty: 'intermediário',
-    description: 'Posicione a barra nos ombros, mantendo as costas retas, desça até que as coxas fiquem paralelas ao chão e então retorne à posição inicial.',
-    imageUrl: 'https://images.pexels.com/photos/4162508/pexels-photo-4162508.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-  },
-  'ex3': {
-    id: 'ex3',
-    name: 'Levantamento Terra',
-    category: 'força',
-    muscleGroup: 'costas',
-    equipment: 'barra',
     difficulty: 'avançado',
-    description: 'Em pé, com a barra no chão, segure a barra com as mãos afastadas na largura dos ombros e levante a barra até ficar em posição ereta.',
-    imageUrl: 'https://images.pexels.com/photos/3289711/pexels-photo-3289711.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+    description: 'Exercício composto para pernas e glúteos.',
+    videoUrl: 'https://www.youtube.com/watch?v=ultWpu6bK0M', // Exemplo
+    imageUrl: 'https://images.pexels.com/photos/416717/pexels-photo-416717.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', // Exemplo
   },
-  'ex4': {
-    id: 'ex4',
-    name: 'Barra Fixa',
+  {
+    id: 'ex-3',
+    name: 'Remada Curvada com Barra',
     category: 'força',
     muscleGroup: 'costas',
     equipment: 'barra',
     difficulty: 'intermediário',
-    description: 'Segure a barra fixa com as palmas das mãos voltadas para frente e puxe o corpo para cima até que o queixo ultrapasse a barra.',
-    imageUrl: 'https://images.pexels.com/photos/2294363/pexels-photo-2294363.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+    description: 'Exercício para as costas, focando nos dorsais.',
+    videoUrl: 'https://www.youtube.com/watch?v=Z0_j2_gJt_w', // Exemplo
+    imageUrl: 'https://images.pexels.com/photos/1557103/pexels-photo-1557103.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', // Exemplo
   },
-  'ex5': {
-    id: 'ex5',
-    name: 'Rosca Direta',
+  {
+    id: 'ex-4',
+    name: 'Desenvolvimento com Halteres (Sentado)',
+    category: 'força',
+    muscleGroup: 'ombros',
+    equipment: 'halteres',
+    difficulty: 'intermediário',
+    description: 'Exercício para os ombros.',
+    videoUrl: 'https://www.youtube.com/watch?v=0o0bB1_0j00', // Exemplo
+    imageUrl: 'https://images.pexels.com/photos/1865131/pexels-photo-1865131.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', // Exemplo
+  },
+  {
+    id: 'ex-5',
+    name: 'Rosca Direta com Barra',
     category: 'força',
     muscleGroup: 'bíceps',
     equipment: 'barra',
     difficulty: 'iniciante',
-    description: 'Em pé, segure a barra com as palmas das mãos voltadas para cima e levante a barra até a altura dos ombros, flexionando os cotovelos.',
-    imageUrl: 'https://images.pexels.com/photos/1229356/pexels-photo-1229356.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+    description: 'Exercício clássico para bíceps.',
+    videoUrl: 'https://www.youtube.com/watch?v=kwG2-h_gQ_A', // Exemplo
+    imageUrl: 'https://images.pexels.com/photos/38630/bodybuilder-weight-training-stress-38630.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', // Exemplo
   },
-  'ex6': {
-    id: 'ex6',
-    name: 'Tríceps Testa',
+  {
+    id: 'ex-6',
+    name: 'Extensão de Tríceps na Polia Alta',
     category: 'força',
     muscleGroup: 'tríceps',
-    equipment: 'barra',
-    difficulty: 'intermediário',
-    description: 'Deitado em um banco reto, segure a barra acima da cabeça, flexione os cotovelos para baixar a barra até a testa e retorne à posição inicial.',
-    imageUrl: 'https://images.pexels.com/photos/4162450/pexels-photo-4162450.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-  },
-  'ex7': {
-    id: 'ex7',
-    name: 'Desenvolvimento Ombro',
-    category: 'força',
-    muscleGroup: 'ombros',
-    equipment: 'barra',
-    difficulty: 'intermediário',
-    description: 'Sentado ou em pé, segure a barra à altura dos ombros e empurre-a para cima até os braços estarem estendidos.',
-    imageUrl: 'https://images.pexels.com/photos/38630/bodybuilder-weight-training-stress-38630.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-  },
-  'ex8': {
-    id: 'ex8',
-    name: 'Abdominal',
-    category: 'força',
-    muscleGroup: 'abdômen',
-    equipment: 'nenhum',
-    difficulty: 'iniciante',
-    description: 'Deitado de costas, com os joelhos dobrados e os pés no chão, cruze as mãos sobre o peito e eleve o tronco em direção aos joelhos.',
-    imageUrl: 'https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-  },
-  'ex9': {
-    id: 'ex9',
-    name: 'Esteira',
-    category: 'cardio',
-    muscleGroup: 'total',
     equipment: 'máquina',
     difficulty: 'iniciante',
-    description: 'Caminhe ou corra na esteira em uma velocidade adequada ao seu nível de condicionamento.',
-    imageUrl: 'https://images.pexels.com/photos/3756042/pexels-photo-3756042.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+    description: 'Exercício isolado para tríceps.',
+    videoUrl: 'https://www.youtube.com/watch?v=N_y_y_y_y_y', // Exemplo
+    imageUrl: 'https://images.pexels.com/photos/3076509/pexels-photo-3076509.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', // Exemplo
   },
-  'ex10': {
-    id: 'ex10',
-    name: 'Bicicleta',
+  {
+    id: 'ex-7',
+    name: 'Leg Press 45',
+    category: 'força',
+    muscleGroup: 'pernas',
+    equipment: 'máquina',
+    difficulty: 'iniciante',
+    description: 'Exercício para pernas, menos impacto que o agachamento.',
+    videoUrl: 'https://www.youtube.com/watch?v=v4_y_y_y_y_y', // Exemplo
+    imageUrl: 'https://images.pexels.com/photos/2294361/pexels-photo-2294361.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', // Exemplo
+  },
+  {
+    id: 'ex-8',
+    name: 'Prancha',
+    category: 'funcional',
+    muscleGroup: 'core',
+    equipment: 'nenhum',
+    difficulty: 'iniciante',
+    description: 'Exercício isométrico para o core.',
+    videoUrl: 'https://www.youtube.com/watch?v=t_y_y_y_y_y_y', // Exemplo
+    imageUrl: 'https://images.pexels.com/photos/4162509/pexels-photo-4162509.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', // Exemplo
+  },
+  {
+    id: 'ex-9',
+    name: 'Corrida na Esteira',
     category: 'cardio',
     muscleGroup: 'pernas',
     equipment: 'máquina',
     difficulty: 'iniciante',
-    description: 'Pedale na bicicleta ergométrica, ajustando a resistência conforme necessário.',
-    imageUrl: 'https://images.pexels.com/photos/863988/pexels-photo-863988.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-  },
-};
-
-// Clientes
-export const clients: Client[] = [
-  {
-    id: 'client1',
-    name: 'Ana Silva',
-    email: 'ana@example.com',
-    phone: '(11) 99999-1234',
-    age: 28,
-    gender: 'feminino',
-    goal: 'Hipertrofia e definição muscular',
-    status: 'ativo',
-    startDate: '2023-01-15',
-    avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    medicalHistory: 'Sem restrições médicas',
-    notes: 'Prefere treinar pela manhã',
-    measurements: [
-      {
-        date: '2023-01-15',
-        weight: 65,
-        height: 168,
-        bodyFat: 26,
-        waist: 75,
-        hips: 95,
-      },
-      {
-        date: '2023-03-15',
-        weight: 63,
-        height: 168,
-        bodyFat: 24,
-        waist: 73,
-        hips: 94,
-      }
-    ],
-    payments: [
-      {
-        id: 'pay1',
-        clientId: 'client1',
-        amount: 350,
-        date: '2023-01-10',
-        status: 'pago',
-        method: 'pix',
-        description: 'Mensalidade - Janeiro 2023',
-        planType: 'mensal',
-        recurrent: true,
-        dueDate: '2023-01-10',
-      },
-      {
-        id: 'pay2',
-        clientId: 'client1',
-        amount: 350,
-        date: '2023-02-10',
-        status: 'pago',
-        method: 'pix',
-        description: 'Mensalidade - Fevereiro 2023',
-        planType: 'mensal',
-        recurrent: true,
-        dueDate: '2023-02-10',
-      }
-    ]
+    description: 'Exercício cardiovascular.',
+    videoUrl: 'https://www.youtube.com/watch?v=c_y_y_y_y_y_y', // Exemplo
+    imageUrl: 'https://images.pexels.com/photos/190370/pexels-photo-190370.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', // Exemplo
   },
   {
-    id: 'client2',
-    name: 'Pedro Santos',
-    email: 'pedro@example.com',
-    phone: '(11) 98888-5678',
-    age: 35,
-    gender: 'masculino',
-    goal: 'Perda de peso e condicionamento',
-    status: 'ativo',
-    startDate: '2022-11-05',
-    avatar: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    medicalHistory: 'Hipertensão controlada',
-    notes: 'Disponível apenas à noite',
-    measurements: [
-      {
-        date: '2022-11-05',
-        weight: 92,
-        height: 178,
-        bodyFat: 28,
-        waist: 98,
-      },
-      {
-        date: '2023-01-05',
-        weight: 88,
-        height: 178,
-        bodyFat: 26,
-        waist: 95,
-      }
-    ],
-    payments: [
-      {
-        id: 'pay3',
-        clientId: 'client2',
-        amount: 900,
-        date: '2022-11-01',
-        status: 'pago',
-        method: 'cartão',
-        description: 'Trimestral - Nov/Dez/Jan',
-        planType: 'trimestral',
-        recurrent: false,
-        dueDate: '2022-11-01',
-      }
-    ]
+    id: 'ex-10',
+    name: 'Alongamento de Isquiotibiais',
+    category: 'flexibilidade',
+    muscleGroup: 'pernas',
+    equipment: 'nenhum',
+    difficulty: 'iniciante',
+    description: 'Alongamento para a parte posterior da coxa.',
+    videoUrl: 'https://www.youtube.com/watch?v=d_y_y_y_y_y_y', // Exemplo
+    imageUrl: 'https://images.pexels.com/photos/4162509/pexels-photo-4162509.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', // Exemplo
   },
-  {
-    id: 'client3',
-    name: 'Mariana Costa',
-    email: 'mariana@example.com',
-    phone: '(11) 97777-9090',
-    age: 42,
-    gender: 'feminino',
-    goal: 'Fortalecimento e mobilidade',
-    status: 'ativo',
-    startDate: '2023-02-20',
-    avatar: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    medicalHistory: 'Osteoporose leve',
-    notes: 'Prefere exercícios de baixo impacto',
-    measurements: [
-      {
-        date: '2023-02-20',
-        weight: 70,
-        height: 165,
-        bodyFat: 30,
-        waist: 82,
-        hips: 100,
-      }
-    ],
-    payments: [
-      {
-        id: 'pay4',
-        clientId: 'client3',
-        amount: 350,
-        date: '2023-02-20',
-        status: 'pago',
-        method: 'transferência',
-        description: 'Mensalidade - Fevereiro 2023',
-        planType: 'mensal',
-        recurrent: true,
-        dueDate: '2023-02-20',
-      },
-      {
-        id: 'pay5',
-        clientId: 'client3',
-        amount: 350,
-        date: '',
-        status: 'pendente',
-        description: 'Mensalidade - Março 2023',
-        planType: 'mensal',
-        recurrent: true,
-        dueDate: '2023-03-20',
-      }
-    ]
-  },
-  {
-    id: 'client4',
-    name: 'Lucas Oliveira',
-    email: 'lucas@example.com',
-    phone: '(11) 96666-4321',
-    age: 25,
-    gender: 'masculino',
-    goal: 'Ganho de massa muscular',
-    status: 'inativo',
-    startDate: '2022-09-10',
-    avatar: 'https://images.pexels.com/photos/1121796/pexels-photo-1121796.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    medicalHistory: 'Sem restrições',
-    notes: 'Pausou por motivos pessoais',
-    measurements: [
-      {
-        date: '2022-09-10',
-        weight: 75,
-        height: 182,
-        bodyFat: 15,
-        chest: 95,
-        waist: 80,
-        arms: 35,
-      }
-    ],
-    payments: [
-      {
-        id: 'pay6',
-        clientId: 'client4',
-        amount: 350,
-        date: '2022-09-10',
-        status: 'pago',
-        method: 'dinheiro',
-        description: 'Mensalidade - Setembro 2022',
-        planType: 'mensal',
-        recurrent: true,
-        dueDate: '2022-09-10',
-      },
-      {
-        id: 'pay7',
-        clientId: 'client4',
-        amount: 350,
-        date: '2022-10-10',
-        status: 'pago',
-        method: 'pix',
-        description: 'Mensalidade - Outubro 2022',
-        planType: 'mensal',
-        recurrent: true,
-        dueDate: '2022-10-10',
-      },
-      {
-        id: 'pay8',
-        clientId: 'client4',
-        amount: 350,
-        date: '',
-        status: 'cancelado',
-        description: 'Mensalidade - Novembro 2022',
-        planType: 'mensal',
-        recurrent: true,
-        dueDate: '2022-11-10',
-      }
-    ]
-  }
 ];
 
-// Treinos
-export const workouts: Workout[] = [
+// Dados mock para planos (Detalhado)
+export const plans: Plan[] = [
   {
-    id: 'workout1',
-    name: 'Treino de Força: Superiores',
-    description: 'Foco em força para membros superiores',
-    created: '2023-01-20',
-    type: 'força',
-    targetMuscleGroups: ['peito', 'costas', 'ombros', 'bíceps', 'tríceps'],
-    exercises: [
-      {
-        exercise: exerciseLibrary['ex1'],
-        sets: [
-          { reps: 10, weight: 30, restTime: 60 },
-          { reps: 10, weight: 40, restTime: 60 },
-          { reps: 8, weight: 50, restTime: 90 }
-        ]
-      },
-      {
-        exercise: exerciseLibrary['ex4'],
-        sets: [
-          { reps: 8, restTime: 60 },
-          { reps: 8, restTime: 60 },
-          { reps: 6, restTime: 90 }
-        ]
-      },
-      {
-        exercise: exerciseLibrary['ex5'],
-        sets: [
-          { reps: 12, weight: 15, restTime: 60 },
-          { reps: 12, weight: 15, restTime: 60 },
-          { reps: 10, weight: 20, restTime: 60 }
-        ]
-      },
-      {
-        exercise: exerciseLibrary['ex6'],
-        sets: [
-          { reps: 12, weight: 15, restTime: 60 },
-          { reps: 12, weight: 15, restTime: 60 },
-          { reps: 10, weight: 20, restTime: 60 }
-        ]
-      },
-      {
-        exercise: exerciseLibrary['ex7'],
-        sets: [
-          { reps: 10, weight: 20, restTime: 60 },
-          { reps: 10, weight: 20, restTime: 60 },
-          { reps: 8, weight: 25, restTime: 60 }
-        ]
-      }
+    id: 'iniciante',
+    name: 'Iniciante',
+    price: 0,
+    frequency: 'vitalicio',
+    features: [
+      'Até 5 clientes',
+      'Criação de treinos básicos',
+      'Acompanhamento de medidas',
+      'Suporte por email'
     ],
-    notes: 'Realizar aquecimento adequado antes de iniciar',
-    isTemplate: true,
-    creatorId: '1',
-    clientIds: ['client1', 'client2']
+    clientLimit: 5,
+    isDefault: true,
   },
   {
-    id: 'workout2',
-    name: 'Treino de Força: Inferiores',
-    description: 'Foco em força para membros inferiores',
-    created: '2023-01-21',
-    type: 'força',
-    targetMuscleGroups: ['pernas', 'glúteos', 'core'],
-    exercises: [
-      {
-        exercise: exerciseLibrary['ex2'],
-        sets: [
-          { reps: 12, weight: 40, restTime: 90 },
-          { reps: 10, weight: 50, restTime: 90 },
-          { reps: 8, weight: 60, restTime: 120 }
-        ]
-      },
-      {
-        exercise: exerciseLibrary['ex3'],
-        sets: [
-          { reps: 10, weight: 50, restTime: 90 },
-          { reps: 8, weight: 60, restTime: 90 },
-          { reps: 6, weight: 70, restTime: 120 }
-        ]
-      },
-      {
-        exercise: exerciseLibrary['ex8'],
-        sets: [
-          { reps: 15, restTime: 60 },
-          { reps: 15, restTime: 60 },
-          { reps: 15, restTime: 60 }
-        ]
-      }
+    id: 'profissional',
+    name: 'Profissional',
+    price: 99.90,
+    frequency: 'mensal',
+    features: [
+      'Até 50 clientes',
+      'Criação ilimitada de treinos',
+      'Biblioteca de exercícios',
+      'Acompanhamento financeiro',
+      'Suporte prioritário'
     ],
-    notes: 'Manter a técnica correta em todos os exercícios',
-    isTemplate: true,
-    creatorId: '1',
-    clientIds: ['client1', 'client3']
+    clientLimit: 50,
   },
   {
-    id: 'workout3',
-    name: 'Treino de Cardio',
-    description: 'Foco em resistência cardiovascular',
-    created: '2023-01-22',
-    type: 'cardio',
-    targetMuscleGroups: ['total'],
-    exercises: [
-      {
-        exercise: exerciseLibrary['ex9'],
-        sets: [
-          { reps: '20 min', time: 1200, restTime: 60 }
-        ]
-      },
-      {
-        exercise: exerciseLibrary['ex10'],
-        sets: [
-          { reps: '20 min', time: 1200, restTime: 60 }
-        ]
-      }
+    id: 'estudio',
+    name: 'Estúdio',
+    price: 249.90,
+    frequency: 'mensal',
+    features: [
+      'Clientes ilimitados',
+      'Múltiplos usuários (equipe)',
+      'Recursos avançados de finanças',
+      'Personalização da marca',
+      'Suporte dedicado'
     ],
-    notes: 'Ajustar intensidade de acordo com o nível de condicionamento',
-    isTemplate: true,
-    creatorId: '1',
-    clientIds: ['client2', 'client3']
-  }
+    clientLimit: 'ilimitado',
+  },
+   {
+    id: 'sessao_unica',
+    name: 'Sessão Única',
+    price: 80.00,
+    frequency: 'sessao_unica',
+    features: [
+      '1 sessão de treino',
+      'Avaliação inicial',
+      'Plano de treino para a sessão'
+    ],
+    clientLimit: 1, // Limite técnico para este tipo de plano
+    sessionsPerPeriod: 1,
+  },
+   {
+    id: 'trimestral',
+    name: 'Trimestral',
+    price: 270.00, // Exemplo: desconto
+    frequency: 'trimestral',
+    features: [
+      'Todos os recursos do plano Profissional',
+      'Pagamento a cada 3 meses',
+      'Desconto aplicado'
+    ],
+    clientLimit: 50,
+    durationInMonths: 3,
+  },
 ];
-
-// Resumo financeiro
-export const financialSummary: FinancialSummary = {
-  totalRevenue: 3000,
-  pendingRevenue: 350,
-  paidToday: 0,
-  dueToday: 0,
-  monthlyRevenue: [2000, 2350, 3000, 2800, 3200, 3000],
-  paymentsByStatus: {
-    pago: 2650,
-    pendente: 350,
-    atrasado: 0,
-    cancelado: 350
-  }
-};
-
-// Gera datas dos últimos 6 meses
-export const last6Months = Array.from({ length: 6 }).map((_, i) => {
-  const date = dayjs().subtract(5 - i, 'month');
-  return date.format('MMM/YY');
-});
-
-// Gera dados para o gráfico de clientes ativos
-export const clientsCountByMonth = [10, 12, 15, 18, 20, 22];

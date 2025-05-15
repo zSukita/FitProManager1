@@ -1,22 +1,42 @@
 import React, { useState } from 'react';
 import { clients, financialSummary, last6Months } from '../data/mockData';
 import { Payment } from '../types';
-import { 
-  BarChart3, 
-  Plus, 
-  Search, 
-  Filter, 
-  ChevronDown, 
-  CalendarDays, 
-  BellRing, 
-  ArrowUp, 
+import {
+  BarChart3,
+  Plus,
+  Search,
+  Filter,
+  ChevronDown,
+  CalendarDays,
+  BellRing,
+  ArrowUp,
   ArrowDown,
   TrendingUp,
   Wallet
 } from 'lucide-react';
 import { Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
 import dayjs from 'dayjs';
 import toast from 'react-hot-toast';
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
 
 const Finances: React.FC = () => {
   const [filter, setFilter] = useState<string>('todos');
@@ -24,7 +44,7 @@ const Finances: React.FC = () => {
   const [sortBy, setSortBy] = useState<string>('data-desc');
 
   // Obter pagamentos de todos os clientes
-  const allPayments = clients.flatMap(client => 
+  const allPayments = clients.flatMap(client =>
     (client.payments || []).map(payment => ({
       ...payment,
       clientName: client.name,
@@ -35,9 +55,9 @@ const Finances: React.FC = () => {
   // Filtrar pagamentos
   const filteredPayments = allPayments.filter(payment => {
     const matchesStatus = filter === 'todos' || payment.status === filter;
-    const matchesSearch = payment.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesSearch = payment.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (payment.description && payment.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+
     return matchesStatus && matchesSearch;
   });
 
@@ -66,12 +86,12 @@ const Finances: React.FC = () => {
   // Status badges
   const getStatusBadge = (status: string, dueDate?: string) => {
     const daysOverdue = dueDate ? getDaysOverdue(dueDate) : 0;
-    
+
     switch (status) {
       case 'pago':
         return <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Pago</span>;
       case 'pendente':
-        return daysOverdue > 0 
+        return daysOverdue > 0
           ? <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Atrasado ({daysOverdue} dias)</span>
           : <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Pendente</span>;
       case 'atrasado':
@@ -207,7 +227,7 @@ const Finances: React.FC = () => {
           </h3>
         </div>
         <div className="h-64">
-          <Bar 
+          <Bar
             data={revenueChartData}
             options={{
               responsive: true,
@@ -231,7 +251,7 @@ const Finances: React.FC = () => {
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="p-6 border-b">
           <h3 className="font-semibold text-gray-800 mb-4">Lista de Pagamentos</h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -286,7 +306,7 @@ const Finances: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -314,10 +334,10 @@ const Finances: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-8 w-8">
-                          <img 
+                          <img
                             className="h-8 w-8 rounded-full object-cover"
-                            src={payment.clientAvatar || 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'} 
-                            alt={payment.clientName} 
+                            src={payment.clientAvatar || 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'}
+                            alt={payment.clientName}
                           />
                         </div>
                         <div className="ml-3">
@@ -352,7 +372,7 @@ const Finances: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       {payment.status === 'pendente' && (
-                        <button 
+                        <button
                           onClick={() => markAsPaid(payment.id)}
                           className="text-primary hover:text-primary/80 font-medium"
                         >

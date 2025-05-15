@@ -11,24 +11,27 @@ const Workouts: React.FC = () => {
 
   // Filtrar treinos
   const filteredWorkouts = workouts.filter(workout => {
-    const matchesSearch = workout.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesSearch = workout.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (workout.description && workout.description.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesType = filterType === 'todos' || workout.type === filterType;
     const matchesMuscle = filterMuscle === 'todos' || workout.targetMuscleGroups.includes(filterMuscle as any);
-    
+
     return matchesSearch && matchesType && matchesMuscle;
   });
 
   // Manipuladores de eventos
   const handleCopyWorkout = (id: string) => {
     toast.success('Treino duplicado com sucesso!');
+    // TODO: Implementar lógica de duplicação real
   };
 
   const handleShareWorkout = (id: string) => {
+    // TODO: Implementar lógica de compartilhamento real (ex: copiar link)
     toast.success('Link do treino copiado para a área de transferência!');
   };
 
   const handleDeleteWorkout = (id: string) => {
+    // TODO: Implementar lógica de exclusão real
     toast.success('Treino excluído com sucesso!');
   };
 
@@ -57,7 +60,12 @@ const Workouts: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-800">Treinos</h1>
           <p className="text-gray-600">Crie e gerencie treinos personalizados</p>
         </div>
-        <Link to="/treinos/criar" className="btn-primary flex items-center gap-2 whitespace-nowrap">
+        {/* Link para a página de criação de treino */}
+        <Link
+          to="/workouts/new"
+          className="btn-primary flex items-center gap-2 whitespace-nowrap"
+          // Removed temporary diagnostic handler
+        >
           <Plus size={18} />
           Novo Treino
         </Link>
@@ -132,7 +140,7 @@ const Workouts: React.FC = () => {
       {filteredWorkouts.length === 0 ? (
         <div className="bg-white rounded-lg shadow-sm p-8 text-center">
           <p className="text-gray-500">Nenhum treino encontrado com os filtros aplicados.</p>
-          <button 
+          <button
             className="mt-2 text-primary hover:underline"
             onClick={() => {
               setSearchTerm('');
@@ -154,11 +162,11 @@ const Workouts: React.FC = () => {
                     {workout.type}
                   </span>
                 </div>
-                
+
                 <p className="text-gray-600 text-sm mb-4 line-clamp-2">
                   {workout.description || 'Sem descrição'}
                 </p>
-                
+
                 <div className="mb-4">
                   <h4 className="text-xs font-medium text-gray-500 mb-2">Grupos musculares</h4>
                   <div className="flex flex-wrap gap-1">
@@ -169,7 +177,7 @@ const Workouts: React.FC = () => {
                     ))}
                   </div>
                 </div>
-                
+
                 <div className="mb-4">
                   <h4 className="text-xs font-medium text-gray-500 mb-2">Exercícios</h4>
                   <div className="space-y-2">
@@ -189,24 +197,24 @@ const Workouts: React.FC = () => {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="flex justify-between mt-6">
                   <div className="flex space-x-2">
-                    <button 
+                    <button
                       onClick={() => handleCopyWorkout(workout.id)}
                       className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md"
                       title="Duplicar treino"
                     >
                       <Copy size={18} />
                     </button>
-                    <button 
+                    <button
                       onClick={() => handleShareWorkout(workout.id)}
                       className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md"
                       title="Compartilhar treino"
                     >
                       <Share size={18} />
                     </button>
-                    <button 
+                    <button
                       onClick={() => handleDeleteWorkout(workout.id)}
                       className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-md"
                       title="Excluir treino"
@@ -214,8 +222,9 @@ const Workouts: React.FC = () => {
                       <Trash2 size={18} />
                     </button>
                   </div>
-                  <Link 
-                    to={`/treinos/${workout.id}`}
+                  {/* Link para a rota correta de detalhes do treino */}
+                  <Link
+                    to={`/workouts/${workout.id}`}
                     className="text-primary hover:text-primary/80 font-medium text-sm"
                   >
                     Ver detalhes

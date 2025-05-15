@@ -5,7 +5,7 @@ export interface User {
   email: string;
   role: 'trainer' | 'admin';
   avatar?: string;
-  plan: 'iniciante' | 'profissional' | 'estudio';
+  planId: string; // Alterado para planId
 }
 
 export interface AuthContextType {
@@ -33,6 +33,7 @@ export interface Client {
   measurements?: ClientMeasurements[];
   workouts?: string[]; // IDs dos treinos
   payments?: Payment[];
+  planId?: string; // Adicionado para associar cliente ao plano
 }
 
 export interface ClientMeasurements {
@@ -87,35 +88,35 @@ export interface Workout {
   clientIds?: string[]; // IDs dos clientes que usam este treino
 }
 
-export type ExerciseCategory = 
-  | 'força' 
-  | 'cardio' 
-  | 'flexibilidade' 
-  | 'equilíbrio' 
+export type ExerciseCategory =
+  | 'força'
+  | 'cardio'
+  | 'flexibilidade'
+  | 'equilíbrio'
   | 'funcional';
 
-export type MuscleGroup = 
-  | 'peito' 
-  | 'costas' 
-  | 'ombros' 
-  | 'bíceps' 
-  | 'tríceps' 
-  | 'pernas' 
-  | 'glúteos' 
-  | 'abdômen' 
-  | 'core' 
+export type MuscleGroup =
+  | 'peito'
+  | 'costas'
+  | 'ombros'
+  | 'bíceps'
+  | 'tríceps'
+  | 'pernas'
+  | 'glúteos'
+  | 'abdômen'
+  | 'core'
   | 'total';
 
-export type Equipment = 
-  | 'nenhum' 
-  | 'halteres' 
-  | 'barra' 
-  | 'máquina' 
-  | 'kettlebell' 
-  | 'elástico' 
-  | 'corda' 
-  | 'banco' 
-  | 'bola' 
+export type Equipment =
+  | 'nenhum'
+  | 'halteres'
+  | 'barra'
+  | 'máquina'
+  | 'kettlebell'
+  | 'elástico'
+  | 'corda'
+  | 'banco'
+  | 'bola'
   | 'outro';
 
 export interface ExerciseLibrary {
@@ -131,7 +132,7 @@ export interface Payment {
   status: 'pago' | 'pendente' | 'atrasado' | 'cancelado';
   method?: 'dinheiro' | 'cartão' | 'pix' | 'transferência' | 'outro';
   description?: string;
-  planType?: 'mensal' | 'trimestral' | 'semestral' | 'anual' | 'sessão';
+  planType?: 'mensal' | 'trimestral' | 'semestral' | 'anual' | 'sessão'; // Pode ser removido se o plano for associado ao cliente
   recurrent: boolean;
   dueDate?: string;
 }
@@ -148,4 +149,19 @@ export interface FinancialSummary {
     atrasado: number;
     cancelado: number;
   };
+}
+
+// Tipos para Planos (Detalhado)
+export type PlanFrequency = 'mensal' | 'trimestral' | 'semestral' | 'anual' | 'sessao_unica' | 'vitalicio';
+
+export interface Plan {
+  id: string;
+  name: string;
+  price: number; // Preço em número
+  frequency: PlanFrequency;
+  features: string[];
+  clientLimit: number | 'ilimitado'; // Limite de clientes
+  sessionsPerPeriod?: number | 'ilimitado'; // Número de sessões por período (para planos por sessão ou com limite)
+  durationInMonths?: number; // Duração em meses (para trimestral, semestral, anual)
+  isDefault?: boolean; // Plano padrão para novos usuários
 }
