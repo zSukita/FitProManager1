@@ -3,14 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --primary: 142, 197, 94;
-  --secondary: 59, 130, 246;
-  --accent: 249, 115, 22;
-  --success: 34, 197, 94;
-  --warning: 245, 158, 11;
-  --error: 239, 68, 68;
-  --background: 249, 250, 251;
-  --foreground: 17, 24, 39;
+  --primary: 34, 197, 94; /* Tailwind green-500 */
+  --secondary: 59, 130, 246; /* Tailwind blue-500 */
+  --accent: 249, 115, 22; /* Tailwind orange-500 */
+  --success: 34, 197, 94; /* Tailwind green-500 */
+  --warning: 245, 158, 11; /* Tailwind amber-500 */
+  --error: 239, 68, 68; /* Tailwind red-500 */
+  --background: 255, 255, 255; /* White */
+  --foreground: 17, 24, 39; /* Tailwind gray-900 */
 }
 
 * {
@@ -30,31 +30,31 @@ body {
   .btn-primary {
     @apply bg-primary text-white font-medium py-2 px-4 rounded-md transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2;
   }
-  
+
   .btn-secondary {
     @apply bg-secondary text-white font-medium py-2 px-4 rounded-md transition-all hover:bg-secondary/90 focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:ring-offset-2;
   }
-  
+
   .btn-outline {
     @apply border border-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2;
   }
-  
+
   .card {
     @apply bg-white rounded-lg shadow-sm p-6 transition-all hover:shadow-md;
   }
-  
+
   .input-field {
     @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary;
   }
-  
+
   .label {
     @apply block text-sm font-medium text-gray-700 mb-1;
   }
-  
+
   .sidebar-link {
     @apply flex items-center gap-3 text-gray-600 hover:text-primary px-4 py-3 hover:bg-primary/10 rounded-md transition-all;
   }
-  
+
   .sidebar-link.active {
     @apply text-primary bg-primary/10 font-medium;
   }

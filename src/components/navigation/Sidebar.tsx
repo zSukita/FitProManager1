@@ -19,10 +19,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const { user, logout } = useAuth();
 
   const navigation = [
-    { name: 'Dashboard', href: '/', icon: Home },
-    { name: 'Clientes', href: '/clients', icon: Users },
-    { name: 'Treinos', href: '/workouts', icon: Dumbbell },
-    { name: 'Finanças', href: '/finances', icon: BarChart3 },
+    // Ajustando os hrefs para serem absolutos e corresponderem às rotas em App.tsx
+    { name: 'Dashboard', href: '/dashboard', icon: Home },
+    { name: 'Clientes', href: '/dashboard/clients', icon: Users },
+    { name: 'Treinos', href: '/dashboard/workouts', icon: Dumbbell },
+    { name: 'Finanças', href: '/dashboard/finances', icon: BarChart3 },
   ];
 
   // Function to format the planId string
@@ -87,7 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
       {/* Links do rodapé */}
       <div className="px-2 py-4 border-t">
         <NavLink
-          to="/settings"
+          to="/dashboard/settings" // Ajustando o href para ser absoluto
           className={({ isActive }) =>
             `sidebar-link ${isActive ? 'active' : ''}`
           }

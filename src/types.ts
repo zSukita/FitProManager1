@@ -68,6 +68,9 @@ export interface Client {
   notes?: string;
   created_at: string;
   updated_at: string;
+  // Add status here if it's part of the client table
+  status?: 'ativo' | 'inativo' | 'pendente';
+  avatar_url?: string; // Added avatar_url based on Clients.tsx usage
 }
 
 export interface Payment {
@@ -79,6 +82,9 @@ export interface Payment {
   description?: string;
   created_at: string;
   updated_at: string;
+  method?: string; // Added method based on Finances.tsx usage
+  notes?: string; // Added notes based on Finances.tsx usage
+  client_name?: string; // Added client_name for displaying in the list
 }
 
 // ExerciseLibrary type is no longer needed as we fetch from DB
@@ -111,24 +117,27 @@ export interface Measurement {
   // Add other measurements as needed
 }
 
-export interface Client {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  age?: number;
-  gender?: 'masculino' | 'feminino' | 'outro';
-  goal?: string;
-  status?: 'ativo' | 'inativo' | 'pendente';
-  startDate?: string;
-  avatar?: string;
-  medicalHistory?: string;
-  notes?: string;
-  measurements?: Measurement[];
-  workouts?: string[]; // IDs of workouts assigned
-  payments?: Payment[]; // Simplified payment info
-  planId?: string; // ID of the plan
-}
+// Keeping this Client interface for now as it seems to be used elsewhere,
+// but the one above is more aligned with the Supabase schema based on usage.
+// Consider consolidating if possible.
+// export interface Client {
+//   id: string;
+//   name: string;
+//   email?: string;
+//   phone?: string;
+//   age?: number;
+//   gender?: 'masculino' | 'feminino' | 'outro';
+//   goal?: string;
+//   status?: 'ativo' | 'inativo' | 'pendente';
+//   startDate?: string;
+//   avatar?: string;
+//   medicalHistory?: string;
+//   notes?: string;
+//   measurements?: Measurement[];
+//   workouts?: string[]; // IDs of workouts assigned
+//   payments?: Payment[]; // Simplified payment info
+//   planId?: string; // ID of the plan
+// }
 
 export interface Plan {
   id: string;
@@ -140,4 +149,15 @@ export interface Plan {
   isDefault?: boolean;
   sessionsPerPeriod?: number; // For session-based plans
   durationInMonths?: number; // For fixed-duration plans
+}
+
+// New types for chart data
+export interface MonthlyRevenueData {
+  month: string;
+  total: number;
+}
+
+export interface MonthlyClientsData {
+  month: string;
+  count: number;
 }

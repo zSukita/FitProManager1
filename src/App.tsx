@@ -15,32 +15,37 @@ import WorkoutDetail from './pages/WorkoutDetail';
 import Plans from './pages/Plans';
 import WorkoutBuilder from './pages/WorkoutBuilder';
 import { exerciseLibrary } from './data/mockData';
-import NewPayment from './pages/NewPayment'; // Import the new page
+import NewPayment from './pages/NewPayment';
+import Landing from './pages/Landing';
 
 function App() {
   const { user, loading } = useAuth();
 
+  // Espera o estado de autenticação carregar antes de renderizar as rotas
   if (loading) {
     return <div>Carregando...</div>;
   }
 
   return (
     <Routes>
+      {/* Rota da Página Inicial para usuários não autenticados */}
+      <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Landing />} />
+
       {/* Rotas Autenticadas que usam o DashboardLayout */}
-      <Route path="/" element={user ? <DashboardLayout /> : <Navigate to="/auth/login" />}>
+      {/* Mudei a rota raiz para /dashboard para evitar conflito com a Landing Page */}
+      <Route path="/dashboard" element={user ? <DashboardLayout /> : <Navigate to="/auth/login" />}>
         <Route index element={<Dashboard />} />
         <Route path="clients" element={<Clients />} />
         <Route path="clients/new" element={<NewClient />} />
         <Route path="clients/:clientId" element={<ClientDetail />} />
-        {/* Add nested routes for finances here */}
         <Route path="finances" element={<Finances />} />
-        <Route path="finances/new" element={<NewPayment />} /> {/* Add the new payment route */}
+        <Route path="finances/new" element={<NewPayment />} />
         <Route path="settings" element={<Settings />} />
         <Route path="settings/plans" element={<Plans />} />
       </Route>
 
-      {/* Workouts routes are separate */}
-      <Route path="/workouts" element={user ? <DashboardLayout /> : <Navigate to="/auth/login" />}>
+      {/* Workouts routes are separate, also nested under /dashboard */}
+      <Route path="/dashboard/workouts" element={user ? <DashboardLayout /> : <Navigate to="/auth/login" />}>
          <Route index element={<Workouts />} />
          <Route path="new" element={<WorkoutBuilder exercises={exerciseLibrary} />} />
          <Route path=":workoutId" element={<WorkoutDetail />} />
@@ -48,13 +53,14 @@ function App() {
 
 
       {/* Rotas de Autenticação */}
-      <Route path="/auth" element={!user ? <AuthLayout /> : <Navigate to="/" />}>
+      <Route path="/auth" element={!user ? <AuthLayout /> : <Navigate to="/dashboard" />}>
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
       </Route>
 
       {/* Rota de fallback */}
-      <Route path="*" element={<Navigate to={user ? "/" : "/auth/login"} />} />
+      {/* Redireciona para / ou /dashboard dependendo do estado de autenticação */}
+      <Route path="*" element={<Navigate to={user ? "/dashboard" : "/"} />} />
     </Routes>
   );
 }

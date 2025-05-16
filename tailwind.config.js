@@ -5,7 +5,7 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#22c55e',
+          DEFAULT: '#22c55e', // green-500
           50: '#f0fdf4',
           100: '#dcfce7',
           200: '#bbf7d0',
@@ -19,7 +19,7 @@ export default {
           950: '#052e16',
         },
         secondary: {
-          DEFAULT: '#3b82f6',
+          DEFAULT: '#3b82f6', // blue-500
           50: '#eff6ff',
           100: '#dbeafe',
           200: '#bfdbfe',
@@ -33,7 +33,7 @@ export default {
           950: '#172554',
         },
         accent: {
-          DEFAULT: '#f97316',
+          DEFAULT: '#f97316', // orange-500
           50: '#fff7ed',
           100: '#ffedd5',
           200: '#fed7aa',
@@ -46,6 +46,8 @@ export default {
           900: '#7c2d12',
           950: '#431407',
         },
+        // Adicionando cores para os cards de funcionalidades se necessário,
+        // mas por enquanto usaremos tons de cinza e a cor primária.
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],

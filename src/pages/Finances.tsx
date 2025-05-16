@@ -4,8 +4,10 @@ import { PlusCircle, Search, Filter, ChevronDown, MoreHorizontal, CalendarDays, 
 import { Payment } from '../types';
 import { fetchPayments, getCurrentUser } from '../services/supabaseService'; // Import Supabase service
 import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext'; // Import useAuth
 
 const Finances: React.FC = () => {
+  const { user } = useAuth(); // Get user from AuthContext
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMethod, setFilterMethod] = useState<string>('todos');
   const [sortBy, setSortBy] = useState<string>('data');
@@ -15,19 +17,20 @@ const Finances: React.FC = () => {
 
   useEffect(() => {
     const loadPayments = async () => {
+       if (!user?.id) { // Check if user and user.id exist
+        setError('Usuário não autenticado.');
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
       try {
-        const user = await getCurrentUser();
-        if (user) {
-          const data = await fetchPayments(user.id);
-          // Sort by date descending by default
-          const sortedData = data.sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime());
-          setPayments(sortedData);
-        } else {
-           toast.error('Usuário não autenticado.');
-           setPayments([]);
-        }
+        // fetchPayments now returns payments with client_name
+        const data = await fetchPayments(user.id);
+        // Sort by date descending by default
+        const sortedData = data.sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime());
+        setPayments(sortedData);
       } catch (err) {
         console.error('Failed to fetch payments:', err);
         setError('Erro ao carregar pagamentos.');
@@ -38,13 +41,13 @@ const Finances: React.FC = () => {
     };
 
     loadPayments();
-  }, []); // Empty dependency array means this runs once on mount
+  }, [user?.id]); // Add user.id to dependency array
 
   // Filtrar pagamentos
   const filteredPayments = payments.filter(payment => {
-    // Assuming client name is needed for search, we'd need to join tables or fetch client names
-    // For now, let's search by payment method or notes if available
-    const matchesSearch = payment.method?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    // Search by client name, payment method, or notes
+    const matchesSearch = payment.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          payment.method?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           payment.notes?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesMethod = filterMethod === 'todos' || payment.method === filterMethod;
 
@@ -80,7 +83,7 @@ const Finances: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-800">Finanças</h1>
           <p className="text-gray-600">Gerencie pagamentos e veja o histórico financeiro</p>
         </div>
-        <Link to="/finances/new" className="btn-primary flex items-center gap-2 whitespace-nowrap">
+        <Link to="/dashboard/finances/new" className="btn-primary flex items-center gap-2 whitespace-nowrap">
           <PlusCircle size={18} />
           Novo Pagamento
         </Link>
@@ -95,7 +98,7 @@ const Finances: React.FC = () => {
             </div>
             <input
               type="text"
-              placeholder="Buscar por método ou notas..." // Updated placeholder
+              placeholder="Buscar por cliente, método ou notas..." // Updated placeholder
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm w-full"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -162,7 +165,7 @@ const Finances: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Cliente {/* This will require joining or fetching client data */}
+                  Cliente
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Valor
@@ -185,8 +188,8 @@ const Finances: React.FC = () => {
               {sortedPayments.map((payment) => (
                 <tr key={payment.id}>
                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {/* Placeholder: Need to fetch client name based on payment.client_id */}
-                    Cliente ID: {payment.client_id}
+                    {/* Display client_name fetched from the join */}
+                    {payment.client_name || 'Cliente Desconhecido'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(payment.amount as any))}
