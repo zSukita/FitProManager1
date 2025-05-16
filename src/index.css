@@ -1,111 +1,84 @@
 @tailwind base;
-@tailwind components;
-@tailwind utilities;
+  @tailwind components;
+  @tailwind utilities;
 
-:root {
-  --primary: 34, 197, 94; /* Tailwind green-500 */
-  --secondary: 59, 130, 246; /* Tailwind blue-500 */
-  --accent: 249, 115, 22; /* Tailwind orange-500 */
-  --success: 34, 197, 94; /* Tailwind green-500 */
-  --warning: 245, 158, 11; /* Tailwind amber-500 */
-  --error: 239, 68, 68; /* Tailwind red-500 */
-  --background: 255, 255, 255; /* White */
-  --foreground: 17, 24, 39; /* Tailwind gray-900 */
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Inter', sans-serif;
-  background-color: rgb(var(--background));
-  color: rgb(var(--foreground));
-}
-
-/* Classes utilitárias customizadas */
-@layer components {
-  .btn-primary {
-    @apply bg-primary text-white font-medium py-2 px-4 rounded-md transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 shadow-sm hover:shadow-md;
+  :root {
+    --primary: 34, 197, 94;
+    --secondary: 59, 130, 246;
+    --accent: 249, 115, 22;
+    --background: 255, 255, 255;
+    --foreground: 17, 24, 39;
   }
 
-  .btn-secondary {
-    @apply bg-secondary text-white font-medium py-2 px-4 rounded-md transition-all hover:bg-secondary/90 focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:ring-offset-2 shadow-sm hover:shadow-md;
+  .dark {
+    --background: 17, 24, 39;
+    --foreground: 255, 255, 255;
   }
 
-  .btn-outline {
-    @apply border border-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2;
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
   }
 
-  .card {
-    @apply bg-white rounded-lg shadow-sm p-6 transition-all hover:shadow-md;
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: rgb(var(--background));
+    color: rgb(var(--foreground));
   }
 
-  .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary;
+  .dark body {
+    background-color: #111827;
+    color: #F9FAFB;
   }
 
-  .label {
-    @apply block text-sm font-medium text-gray-700 mb-1;
+  @layer components {
+    .btn-primary {
+      @apply bg-primary text-white font-medium py-2 px-4 rounded-md transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 shadow-sm hover:shadow-md;
+    }
+
+    .btn-secondary {
+      @apply bg-secondary text-white font-medium py-2 px-4 rounded-md transition-all hover:bg-secondary/90 focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:ring-offset-2;
+    }
+
+    .card {
+      @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-all hover:shadow-md;
+    }
+
+    .input-field {
+      @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary dark:bg-gray-700 dark:text-white;
+    }
+
+    .notification {
+      @apply fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg animate-fade-in-down transition-all duration-300 ease-in-out;
+    }
+
+    .notification.success {
+      @apply bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100;
+    }
+
+    .notification.error {
+      @apply bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100;
+    }
+
+    .notification.info {
+      @apply bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100;
+    }
   }
 
-  .sidebar-link {
-    @apply flex items-center gap-3 text-gray-600 hover:text-primary px-4 py-3 hover:bg-primary/10 rounded-md transition-all;
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
-  .sidebar-link.active {
-    @apply text-primary bg-primary/10 font-medium;
+  .animate-fade-in-down {
+    animation: fadeInDown 0.3s ease forwards;
   }
-}
 
-/* Animações */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+  .dark .sidebar-link {
+    @apply text-gray-300 hover:text-white;
+  }
 
-@keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.5s ease forwards;
-}
-
-.animate-slide-up {
-  animation: slideUp 0.5s ease forwards;
-}
-
-.animate-bounce-slow {
-  animation: bounce 2s ease-in-out infinite;
-}
-
-.client-card {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.client-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-}
-
-/* Custom styles for landing page */
-.hero-gradient {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
-}
-
-.feature-icon {
-  transition: transform 0.3s ease;
-}
-
-.feature-icon:hover {
-  transform: scale(1.1) rotate(5deg);
-}
+  .dark .btn-outline {
+    @apply border-gray-600 text-gray-300 hover:bg-gray-700;
+  }
