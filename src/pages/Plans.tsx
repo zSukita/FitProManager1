@@ -199,7 +199,7 @@ const Plans: React.FC = () => {
   };
 
   const handleCloseClientModal = () => {
-    setShowClientForClients(null);
+    setSelectedPlanForClients(null);
     setShowClientModal(false);
   };
 
